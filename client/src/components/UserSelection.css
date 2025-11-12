@@ -1,0 +1,129 @@
+.user-selection {
+    width: 100%;
+}
+
+.selection-title {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.selection-title h2 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.selection-title p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: white;
+    padding: 0.75rem 1.25rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-container svg {
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    padding: 0;
+    font-size: 1rem;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.loading,
+.no-results {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: white;
+    border-radius: 8px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.staff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.staff-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.staff-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    transform: translateY(-4px);
+}
+
+.staff-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.staff-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.staff-info {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.initials {
+    background: #f0f0f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.staff-id {
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .selection-title h2 {
+        font-size: 1.5rem;
+    }
+
+    .staff-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .search-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-container svg {
+        display: none;
+    }
+}

@@ -1,0 +1,39 @@
+.items-management .add-item {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.items-management input {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+}
+
+.items-management .items-list {
+    margin-bottom: 1rem;
+}
+
+.items-management .item-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.items-management .message {
+    margin-top: 0.75rem;
+}
+
+.items-management textarea {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+}
+
+.items-import-actions {
+    margin-top: 0.5rem;
+}

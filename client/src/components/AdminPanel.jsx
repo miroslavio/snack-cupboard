@@ -1,0 +1,50 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Upload, Download, Settings } from 'lucide-react';
+import StaffManagement from './admin/StaffManagement';
+import ItemsManagement from './admin/ItemsManagement';
+import PurchasesExport from './admin/PurchasesExport';
+import './AdminPanel.css';
+
+export default function AdminPanel({ onBack }) {
+    const [activeTab, setActiveTab] = useState('staff');
+
+    return (
+        <div className="admin-panel">
+            <div className="admin-header">
+                <h2>Admin Panel</h2>
+                <button className="back-btn" onClick={onBack}>← Back</button>
+            </div>
+
+            <div className="admin-tabs">
+                <button
+                    className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('staff')}
+                >
+                    <Upload size={18} />
+                    Manage Staff
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'items' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('items')}
+                >
+                    <Settings size={18} />
+                    Manage Items
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'purchases' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('purchases')}
+                >
+                    <Download size={18} />
+                    Export Purchases
+                </button>
+            </div>
+
+            <div className="admin-content">
+                {activeTab === 'staff' && <StaffManagement />}
+                {activeTab === 'items' && <ItemsManagement />}
+                {activeTab === 'purchases' && <PurchasesExport />}
+            </div>
+        </div>
+    );
+}
