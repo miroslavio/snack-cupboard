@@ -1,3 +1,7 @@
+@import './admin-common.css';
+
+@media (prefers-color-scheme: dark) {}
+
 .items-management .add-item {
     display: flex;
     gap: 0.5rem;

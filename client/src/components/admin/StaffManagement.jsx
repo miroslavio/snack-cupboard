@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './staff.css';
 import ConfirmModal from '../ConfirmModal';
+import FormModal from '../FormModal';
 
 export default function StaffManagement() {
     const [csvText, setCsvText] = useState('');
@@ -17,6 +18,8 @@ export default function StaffManagement() {
     const [editInitials, setEditInitials] = useState('');
     const [editForename, setEditForename] = useState('');
     const [editSurname, setEditSurname] = useState('');
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [showImportForm, setShowImportForm] = useState(false);
 
     useEffect(() => {
         fetchStaff();
@@ -39,6 +42,7 @@ export default function StaffManagement() {
             });
             setMessage(response.data.message);
             setCsvText('');
+            setShowImportForm(false);
             fetchStaff();
         } catch (err) {
             setMessage('Error importing staff: ' + (err.response?.data?.error ?? err.message));
@@ -53,6 +57,7 @@ export default function StaffManagement() {
             try {
                 const res = await axios.post('/api/staff/import', text, { headers: { 'Content-Type': 'text/csv' } });
                 setMessage(res.data.message);
+                setShowImportForm(false);
                 fetchStaff();
             } catch (err) {
                 setMessage('Error importing staff file: ' + (err.response?.data?.error ?? err.message));
@@ -75,6 +80,7 @@ export default function StaffManagement() {
             });
             setMessage(res.data.message || 'Staff added');
             setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
+            setShowAddForm(false);
             fetchStaff();
         } catch (err) {
             setMessage('Error adding staff: ' + (err.response?.data?.error ?? err.message));
@@ -87,6 +93,7 @@ export default function StaffManagement() {
             handleAdd();
         } else if (e.key === 'Escape') {
             setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
+            setShowAddForm(false);
         }
     }
 
@@ -153,72 +160,102 @@ export default function StaffManagement() {
 
     return (
         <div className="staff-management">
-            <h3>Manage Staff</h3>
-
-            <div className="staff-add">
-                <input placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} />
-                <input placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} />
-                <input placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} />
-                <input placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} />
-                <button onClick={handleAdd}>Add Staff</button>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                <h4 style={{ margin: 0 }}>Staff Members</h4>
-                <input placeholder="Search staff..." value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ddd' }} />
+            <div className="search-bar-container">
+                <div className="search-wrapper">
+                    <span className="search-icon">🔍</span>
+                    <input className="search-input" placeholder="Search" value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} />
+                </div>
+                <button className="add-button secondary" onClick={() => setShowImportForm(true)}>Import</button>
+                <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
             <div className="staff-list">
-                {filtered.length === 0 ? (
-                    <div className="no-results">No staff found</div>
-                ) : (
-                    filtered.map(s => (
-                        <div key={s.staffId} className="staff-row">
-                            {editingId === s.staffId ? (
-                                <>
-                                    <div style={{ flex: 1 }}>
-                                        <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                        <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                        <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                    </div>
-                                    <div className="staff-actions-row">
-                                        <button onClick={() => saveEdit(s.staffId)}>Save</button>
-                                        <button onClick={cancelEdit} style={{ marginLeft: 8 }}>Cancel</button>
-                                    </div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="staff-main">{s.forename} {s.surname} <span className="initials">{s.initials}</span></div>
-                                    <div className="staff-meta">{s.staffId}</div>
-                                    <div className="staff-actions-row">
-                                        <button onClick={() => startEdit(s)}>Edit</button>
-                                        <button className="delete-btn" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} style={{ marginLeft: 8 }}>Delete</button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    ))
-                )}
-            </div>
-
-            <hr />
-
-            <h4>Import Staff List (CSV)</h4>
-            <p>Upload a CSV with headers: StaffID, Initials, Surname, Forename</p>
-            <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} />
-
-            <p>Or paste CSV text below and click Import (will replace existing list):</p>
-            <textarea
-                rows={6}
-                value={csvText}
-                onChange={(e) => setCsvText(e.target.value)}
-                placeholder={`StaffID,Initials,Surname,Forename\n001,AB,Smith,Alan`}
-            />
-            <div className="staff-actions">
-                <button onClick={handleImport}>Import CSV</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Forename</th>
+                            <th>Surname</th>
+                            <th>Initials</th>
+                            <th className="col-staffid">Staff ID</th>
+                            <th className="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filtered.length === 0 ? (
+                            <tr><td colSpan={5} className="no-results">No staff found</td></tr>
+                        ) : (
+                            filtered.map(s => (
+                                <tr key={s.staffId}>
+                                    {editingId === s.staffId ? (
+                                        <>
+                                            <td>
+                                                <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                            </td>
+                                            <td>
+                                                <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                            </td>
+                                            <td>
+                                                <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                            </td>
+                                            <td className="col-staffid">{s.staffId}</td>
+                                            <td className="col-actions">
+                                                <button onClick={() => saveEdit(s.staffId)} className="table-button">Save</button>
+                                                <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td className="staff-main">{s.forename}</td>
+                                            <td className="staff-main">{s.surname}</td>
+                                            <td className="staff-main">{s.initials}</td>
+                                            <td className="col-staffid">{s.staffId}</td>
+                                            <td className="col-actions">
+                                                <button onClick={() => startEdit(s)} className="table-button">Edit</button>
+                                                <button className="delete-btn table-button" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)}>Delete</button>
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {message && <div className="message">{message}</div>}
+
+            <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setShowImportForm(false); }}>
+                <div style={{ marginBottom: '1rem' }}>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: StaffID,Initials,Surname,Forename</p>
+                    <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
+                    <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
+                    <textarea 
+                        rows={8} 
+                        value={csvText} 
+                        onChange={e => setCsvText(e.target.value)} 
+                        placeholder={`StaffID,Initials,Surname,Forename\n001,AB,Smith,Alan\n002,CD,Jones,Carol`}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
+                    />
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing staff members</p>
+                </div>
+                <div className="form-modal-actions">
+                    <button type="button" onClick={() => { setCsvText(''); setShowImportForm(false); }}>Cancel</button>
+                    <button type="submit" className="primary" onClick={handleImport}>Import</button>
+                </div>
+            </FormModal>
+
+            <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); }}>
+                <div className="staff-add">
+                    <input placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus />
+                    <input placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} />
+                    <input placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} />
+                    <input placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} />
+                </div>
+                <div className="form-modal-actions">
+                    <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); }}>Cancel</button>
+                    <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
+                </div>
+            </FormModal>
 
             <ConfirmModal
                 open={confirmOpen}

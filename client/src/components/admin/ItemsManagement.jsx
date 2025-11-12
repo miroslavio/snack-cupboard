@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './items.css';
 import ConfirmModal from '../ConfirmModal';
+import FormModal from '../FormModal';
 
 export default function ItemsManagement() {
     const [items, setItems] = useState([]);
@@ -15,6 +16,8 @@ export default function ItemsManagement() {
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [editPrice, setEditPrice] = useState('');
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [showImportForm, setShowImportForm] = useState(false);
 
     useEffect(() => { fetchItems(); }, []);
 
@@ -38,6 +41,7 @@ export default function ItemsManagement() {
             }
             await axios.post('/api/items', { name, price: p });
             setName(''); setPrice('');
+            setShowAddForm(false);
             fetchItems();
             setMessage('Item added');
         } catch (err) {
@@ -112,6 +116,7 @@ export default function ItemsManagement() {
             try {
                 const res = await axios.post('/api/items/import-csv', text, { headers: { 'Content-Type': 'text/csv' } });
                 setMessage(res.data.message);
+                setShowImportForm(false);
                 fetchItems();
             } catch (err) {
                 setMessage('Error importing items file: ' + (err.response?.data?.error ?? err.message));
@@ -124,6 +129,8 @@ export default function ItemsManagement() {
         try {
             const res = await axios.post('/api/items/import-csv', csvText, { headers: { 'Content-Type': 'text/csv' } });
             setMessage(res.data.message);
+            setCsvText('');
+            setShowImportForm(false);
             fetchItems();
         } catch (err) {
             setMessage('Error importing items: ' + (err.response?.data?.error ?? err.message));
@@ -132,59 +139,88 @@ export default function ItemsManagement() {
 
     return (
         <div className="items-management">
-            <h3>Manage Items</h3>
-
-            <div className="add-item">
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setName(''); setPrice(''); } }} />
-                <input value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') { setName(''); setPrice(''); } }} />
-                <button onClick={handleAdd}>Add Item</button>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                <h4 style={{ margin: 0 }}>Items</h4>
-                <input placeholder="Search items..." value={search} onChange={e => setSearch(e.target.value)} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ddd' }} />
+            <div className="search-bar-container">
+                <div className="search-wrapper">
+                    <span className="search-icon">🔍</span>
+                    <input className="search-input" placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+                <button className="add-button secondary" onClick={() => setShowImportForm(true)}>Import</button>
+                <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
             <div className="items-list">
-                {items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase())).map(it => (
-                    <div key={it.id} className="item-row">
-                        {editingId === it.id ? (
-                            <>
-                                <div style={{ flex: 1 }}>
-                                    <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                    <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                </div>
-                                <div>
-                                    <button onClick={() => saveEdit(it.id)}>Save</button>
-                                    <button onClick={cancelEdit} style={{ marginLeft: 8 }}>Cancel</button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <div className="item-main">{it.name}</div>
-                                <div className="item-price">£{it.price.toFixed(2)}</div>
-                                <div>
-                                    <button onClick={() => startEdit(it)}>Edit</button>
-                                    <button onClick={() => handleDeleteRequest(it)} style={{ marginLeft: 8 }}>Delete</button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            <hr />
-
-            <h4>Import Items (CSV)</h4>
-            <p>CSV headers: name,price</p>
-            <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} />
-            <p>Or paste CSV text below and click Import (will replace existing list):</p>
-            <textarea rows={6} value={csvText} onChange={e => setCsvText(e.target.value)} placeholder={`name,price\nChocolate Bar,1.25`}></textarea>
-            <div className="items-import-actions">
-                <button onClick={handleImport}>Import CSV</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th className="col-price">Price</th>
+                            <th className="col-actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase())).map(it => (
+                            <tr key={it.id}>
+                                {editingId === it.id ? (
+                                    <>
+                                        <td>
+                                            <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                        </td>
+                                        <td className="col-price">
+                                            <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                        </td>
+                                        <td className="col-actions">
+                                            <button onClick={() => saveEdit(it.id)} className="table-button">Save</button>
+                                            <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                        </td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td className="item-main">{it.name}</td>
+                                        <td className="col-price">£{it.price.toFixed(2)}</td>
+                                        <td className="col-actions">
+                                            <button onClick={() => startEdit(it)} className="table-button">Edit</button>
+                                            <button onClick={() => handleDeleteRequest(it)} className="delete-btn table-button">Delete</button>
+                                        </td>
+                                    </>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
             {message && <div className="message">{message}</div>}
+
+            <FormModal open={showImportForm} title="Import Items (CSV)" onClose={() => { setCsvText(''); setShowImportForm(false); }}>
+                <div style={{ marginBottom: '1rem' }}>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: name,price</p>
+                    <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
+                    <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
+                    <textarea 
+                        rows={8} 
+                        value={csvText} 
+                        onChange={e => setCsvText(e.target.value)} 
+                        placeholder={`name,price\nChocolate Bar,1.25\nCoke,1.50`}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
+                    />
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing items</p>
+                </div>
+                <div className="form-modal-actions">
+                    <button type="button" onClick={() => { setCsvText(''); setShowImportForm(false); }}>Cancel</button>
+                    <button type="submit" className="primary" onClick={handleImport}>Import</button>
+                </div>
+            </FormModal>
+
+            <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setShowAddForm(false); }}>
+                <div className="add-item">
+                    <input value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus />
+                    <input value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} />
+                </div>
+                <div className="form-modal-actions">
+                    <button type="button" onClick={() => { setName(''); setPrice(''); setShowAddForm(false); }}>Cancel</button>
+                    <button type="submit" className="primary" onClick={handleAdd}>Add Item</button>
+                </div>
+            </FormModal>
 
             <ConfirmModal
                 open={confirmOpen}
