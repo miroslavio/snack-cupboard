@@ -74,4 +74,60 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
     }
 });
 
+// Create single staff member
+router.post('/', express.json(), async (req, res) => {
+    try {
+        const { staffId, initials, surname, forename } = req.body;
+        if (!staffId || !initials || !surname || !forename) {
+            return res.status(400).json({ error: 'staffId, initials, surname and forename are required' });
+        }
+
+        await runAsync(
+            'INSERT INTO staff (staffId, initials, surname, forename) VALUES (?, ?, ?, ?)',
+            [staffId, initials, surname, forename]
+        );
+
+        res.json({ message: 'Staff member added' });
+    } catch (err) {
+        console.error(err);
+        if (err.message && err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'StaffID already exists' });
+        }
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete a staff member by staffId
+router.delete('/:staffId', async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        await runAsync('DELETE FROM staff WHERE staffId = ?', [staffId]);
+        res.json({ message: 'Staff member deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update a staff member (initials, forename, surname) by staffId
+router.put('/:staffId', express.json(), async (req, res) => {
+    try {
+        const { staffId } = req.params;
+        const { initials, forename, surname } = req.body;
+        if (!initials || !forename || !surname) {
+            return res.status(400).json({ error: 'initials, forename and surname are required' });
+        }
+
+        await runAsync(
+            'UPDATE staff SET initials = ?, forename = ?, surname = ? WHERE staffId = ?',
+            [initials, forename, surname, staffId]
+        );
+
+        res.json({ message: 'Staff member updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
