@@ -5,7 +5,7 @@ import UserSelection from './components/UserSelection';
 import ItemSelection from './components/ItemSelection';
 import Basket from './components/Basket';
 import AdminPanel from './components/AdminPanel';
-import { Menu, X } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('user-selection');
@@ -77,38 +77,25 @@ function App() {
             <header className="header">
                 <div className="header-content">
                     <h1>🥨 Snack Cupboard</h1>
-                    <button className="menu-btn" onClick={() => setShowMenu(!showMenu)}>
-                        {showMenu ? <X size={24} /> : <Menu size={24} />}
-                    </button>
+                    <div className="header-actions">
+                        <button className="settings-btn" aria-label="Open menu" onClick={() => setShowMenu(!showMenu)}>
+                            <Settings size={22} />
+                        </button>
+                        {showMenu && (
+                            <nav className="settings-menu" role="menu">
+                                <button role="menuitem" onClick={() => { setCurrentPage('user-selection'); setBasket([]); setSelectedStaff(null); setShowMenu(false); }}>
+                                    User Portal
+                                </button>
+                                <button role="menuitem" onClick={() => { setCurrentPage('admin'); setShowMenu(false); }}>
+                                    Admin Panel
+                                </button>
+                            </nav>
+                        )}
+                    </div>
                 </div>
-                {showMenu && (
-                    <nav className="mobile-menu">
-                        <button onClick={() => { setCurrentPage('user-selection'); setShowMenu(false); }}>
-                            User Portal
-                        </button>
-                        <button onClick={() => { setCurrentPage('admin'); setShowMenu(false); }}>
-                            Admin Panel
-                        </button>
-                    </nav>
-                )}
             </header>
 
             <div className="container">
-                <nav className="sidebar">
-                    <button
-                        className={currentPage === 'user-selection' ? 'active' : ''}
-                        onClick={() => { setCurrentPage('user-selection'); setBasket([]); setSelectedStaff(null); }}
-                    >
-                        User Portal
-                    </button>
-                    <button
-                        className={currentPage === 'admin' ? 'active' : ''}
-                        onClick={() => setCurrentPage('admin')}
-                    >
-                        Admin Panel
-                    </button>
-                </nav>
-
                 <main className="main-content">
                     {currentPage === 'user-selection' && !selectedStaff && (
                         <UserSelection onSelectStaff={handleSelectStaff} />

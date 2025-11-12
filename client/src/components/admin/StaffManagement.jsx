@@ -229,10 +229,10 @@ export default function StaffManagement() {
                     <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: StaffID,Initials,Surname,Forename</p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
                     <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
-                    <textarea 
-                        rows={8} 
-                        value={csvText} 
-                        onChange={e => setCsvText(e.target.value)} 
+                    <textarea
+                        rows={8}
+                        value={csvText}
+                        onChange={e => setCsvText(e.target.value)}
                         placeholder={`StaffID,Initials,Surname,Forename\n001,AB,Smith,Alan\n002,CD,Jones,Carol`}
                         style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
                     />
