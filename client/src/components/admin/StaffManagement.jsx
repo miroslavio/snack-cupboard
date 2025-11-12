@@ -13,10 +13,10 @@ export default function StaffManagement() {
     const [newInitials, setNewInitials] = useState('');
     const [newForename, setNewForename] = useState('');
     const [newSurname, setNewSurname] = useState('');
-        const [editingId, setEditingId] = useState(null);
-        const [editInitials, setEditInitials] = useState('');
-        const [editForename, setEditForename] = useState('');
-        const [editSurname, setEditSurname] = useState('');
+    const [editingId, setEditingId] = useState(null);
+    const [editInitials, setEditInitials] = useState('');
+    const [editForename, setEditForename] = useState('');
+    const [editSurname, setEditSurname] = useState('');
 
     useEffect(() => {
         fetchStaff();
@@ -64,6 +64,9 @@ export default function StaffManagement() {
     const handleAdd = async () => {
         try {
             if (!newStaffId || !newInitials || !newForename || !newSurname) return setMessage('All fields required');
+            // client-side duplicate check for StaffID
+            const exists = staffList.some(s => s.staffId && s.staffId.toLowerCase() === newStaffId.trim().toLowerCase());
+            if (exists) return setMessage('A staff member with that StaffID already exists');
             const res = await axios.post('/api/staff', {
                 staffId: newStaffId,
                 initials: newInitials,
@@ -77,6 +80,15 @@ export default function StaffManagement() {
             setMessage('Error adding staff: ' + (err.response?.data?.error ?? err.message));
         }
     };
+
+    const handleAddKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAdd();
+        } else if (e.key === 'Escape') {
+            setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
+        }
+    }
 
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmTarget, setConfirmTarget] = useState(null);
@@ -102,36 +114,36 @@ export default function StaffManagement() {
         }
     };
 
-        const startEdit = (s) => {
-            setEditingId(s.staffId);
-            setEditInitials(s.initials || '');
-            setEditForename(s.forename || '');
-            setEditSurname(s.surname || '');
-            setMessage('');
-        };
+    const startEdit = (s) => {
+        setEditingId(s.staffId);
+        setEditInitials(s.initials || '');
+        setEditForename(s.forename || '');
+        setEditSurname(s.surname || '');
+        setMessage('');
+    };
 
-        const cancelEdit = () => {
-            setEditingId(null);
-            setEditInitials('');
-            setEditForename('');
-            setEditSurname('');
-        };
+    const cancelEdit = () => {
+        setEditingId(null);
+        setEditInitials('');
+        setEditForename('');
+        setEditSurname('');
+    };
 
-        const saveEdit = async (staffId) => {
-            try {
-                if (!editInitials || !editForename || !editSurname) return setMessage('All fields required');
-                const res = await axios.put(`/api/staff/${encodeURIComponent(staffId)}`, {
-                    initials: editInitials,
-                    forename: editForename,
-                    surname: editSurname
-                });
-                setMessage(res.data.message || 'Updated');
-                cancelEdit();
-                fetchStaff();
-            } catch (err) {
-                setMessage('Error updating staff: ' + (err.response?.data?.error ?? err.message));
-            }
-        };
+    const saveEdit = async (staffId) => {
+        try {
+            if (!editInitials || !editForename || !editSurname) return setMessage('All fields required');
+            const res = await axios.put(`/api/staff/${encodeURIComponent(staffId)}`, {
+                initials: editInitials,
+                forename: editForename,
+                surname: editSurname
+            });
+            setMessage(res.data.message || 'Updated');
+            cancelEdit();
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error updating staff: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
 
     const filtered = staffList.filter(s => {
         if (!search) return true;
@@ -144,11 +156,49 @@ export default function StaffManagement() {
             <h3>Manage Staff</h3>
 
             <div className="staff-add">
-                <input placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} />
-                <input placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} />
-                <input placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} />
-                <input placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} />
+                <input placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} />
+                <input placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} />
+                <input placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} />
+                <input placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} />
                 <button onClick={handleAdd}>Add Staff</button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                <h4 style={{ margin: 0 }}>Staff Members</h4>
+                <input placeholder="Search staff..." value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} style={{ padding: '0.5rem', borderRadius: 6, border: '1px solid #ddd' }} />
+            </div>
+
+            <div className="staff-list">
+                {filtered.length === 0 ? (
+                    <div className="no-results">No staff found</div>
+                ) : (
+                    filtered.map(s => (
+                        <div key={s.staffId} className="staff-row">
+                            {editingId === s.staffId ? (
+                                <>
+                                    <div style={{ flex: 1 }}>
+                                        <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                        <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                        <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                    </div>
+                                    <div className="staff-actions-row">
+                                        <button onClick={() => saveEdit(s.staffId)}>Save</button>
+                                        <button onClick={cancelEdit} style={{ marginLeft: 8 }}>Cancel</button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="staff-main">{s.forename} {s.surname} <span className="initials">{s.initials}</span></div>
+                                    <div className="staff-meta">{s.staffId}</div>
+                                    <div className="staff-actions-row">
+                                        <button onClick={() => startEdit(s)}>Edit</button>
+                                        <button className="delete-btn" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} style={{ marginLeft: 8 }}>Delete</button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    ))
+                )}
             </div>
 
             <hr />
@@ -168,57 +218,15 @@ export default function StaffManagement() {
                 <button onClick={handleImport}>Import CSV</button>
             </div>
 
-            <hr />
+            {message && <div className="message">{message}</div>}
 
-            <div className="staff-list-container">
-                <div className="staff-list-header">
-                    <h4>Staff Members</h4>
-                    <input placeholder="Search staff..." value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} />
-                </div>
-
-                <div className="staff-list">
-                                {filtered.length === 0 ? (
-                        <div className="no-results">No staff found</div>
-                    ) : (
-                        filtered.map(s => (
-                                                <div key={s.staffId} className="staff-row">
-                                                    {editingId === s.staffId ? (
-                                                        <>
-                                                            <div style={{flex:1}}>
-                                                                <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} />
-                                                                <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} />
-                                                                <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} />
-                                                            </div>
-                                                            <div className="staff-actions-row">
-                                                                <button onClick={() => saveEdit(s.staffId)}>Save</button>
-                                                                <button onClick={cancelEdit} style={{marginLeft:8}}>Cancel</button>
-                                                            </div>
-                                                        </>
-                                                                        ) : (
-                                                                            <>
-                                                                                <div className="staff-main">{s.forename} {s.surname} <span className="initials">{s.initials}</span></div>
-                                                                                <div className="staff-meta">{s.staffId}</div>
-                                                                                <div className="staff-actions-row">
-                                                                                    <button onClick={() => startEdit(s)}>Edit</button>
-                                                                                    <button className="delete-btn" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} style={{marginLeft:8}}>Delete</button>
-                                                                                </div>
-                                                                            </>
-                                                                        )}
-                                                                    </div>
-                        ))
-                    )}
-                </div>
-            </div>
-
-                                        {message && <div className="message">{message}</div>}
-
-                                        <ConfirmModal
-                                            open={confirmOpen}
-                                            title="Delete staff member"
-                                            message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.displayName} (${confirmTarget.staffId})? This cannot be undone.` : 'Are you sure?' }
-                                            onConfirm={handleDelete}
-                                            onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
-                                        />
+            <ConfirmModal
+                open={confirmOpen}
+                title="Delete staff member"
+                message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.displayName} (${confirmTarget.staffId})? This cannot be undone.` : 'Are you sure?'}
+                onConfirm={handleDelete}
+                onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
+            />
         </div>
     );
 }

@@ -46,6 +46,12 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Name and price are required' });
         }
 
+        // Check duplicate name (case-insensitive)
+        const existing = await getAsync('SELECT id FROM items WHERE LOWER(name) = LOWER(?)', [name]);
+        if (existing) {
+            return res.status(400).json({ error: 'Item already exists' });
+        }
+
         const result = await runAsync(
             'INSERT INTO items (name, price) VALUES (?, ?)',
             [name, price]
@@ -67,6 +73,12 @@ router.put('/:id', async (req, res) => {
         const { name, price } = req.body;
         if (!name || price === undefined) {
             return res.status(400).json({ error: 'Name and price are required' });
+        }
+
+        // Check for duplicate name on other items
+        const existing = await getAsync('SELECT id FROM items WHERE LOWER(name) = LOWER(?) AND id != ?', [name, req.params.id]);
+        if (existing) {
+            return res.status(400).json({ error: 'Another item with that name already exists' });
         }
 
         await runAsync(

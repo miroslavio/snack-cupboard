@@ -37,3 +37,70 @@
 .items-import-actions {
     margin-top: 0.5rem;
 }
+
+.item-main {
+    font-weight: 600;
+}
+
+.item-price {
+    color: #667eea;
+    font-weight: 700;
+}
+
+.items-management input[type="file"] {
+    margin-top: 0.5rem;
+}
+
+.items-management .items-list {
+    background: white;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    padding: 0.5rem;
+    max-height: 350px;
+    overflow: auto;
+}
+
+.items-management .item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.items-management .item-row:last-child {
+    border-bottom: none;
+}
+
+.items-management .item-row button {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+}
+
+.items-management .item-row button:hover {
+    background: #ff5252;
+}
+
+.edit-input {
+    display: block;
+    padding: 0.4rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    width: 100%;
+}
+
+.items-management .item-row>div>button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+}
+
+.items-management .item-row>div>button:hover {
+    opacity: 0.95;
+}
