@@ -5,20 +5,21 @@ import UserSelection from './components/UserSelection';
 import ItemSelection from './components/ItemSelection';
 import Basket from './components/Basket';
 import AdminPanel from './components/AdminPanel';
-import { Settings } from 'lucide-react';
+import PasswordModal from './components/PasswordModal';
+import { Settings, Home } from 'lucide-react';
 
 function App() {
     const [currentPage, setCurrentPage] = useState('user-selection');
     const [selectedStaff, setSelectedStaff] = useState(null);
     const [basket, setBasket] = useState([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [showMenu, setShowMenu] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     const handleSelectStaff = (staff) => {
         setSelectedStaff(staff);
         setBasket([]);
         setCurrentPage('item-selection');
-        setShowMenu(false);
     };
 
     const handleAddToBasket = (item) => {
@@ -61,15 +62,35 @@ function App() {
         }
     };
 
+    const handleAdminAccess = () => {
+        setShowPasswordModal(true);
+    };
+
+    const handlePasswordSubmit = (password) => {
+        // Simple password check - in production, use proper authentication
+        if (password === 'admin123') {
+            setIsAuthenticated(true);
+            setCurrentPage('admin');
+            setShowPasswordModal(false);
+        } else {
+            alert('Incorrect password');
+        }
+    };
+
+    const handleHomeClick = () => {
+        setIsAuthenticated(false);
+        setCurrentPage('user-selection');
+    };
+
     const handleBack = () => {
         if (currentPage === 'item-selection') {
             setBasket([]);
             setSelectedStaff(null);
             setCurrentPage('user-selection');
         } else if (currentPage === 'admin') {
+            setIsAuthenticated(false);
             setCurrentPage('user-selection');
         }
-        setShowMenu(false);
     };
 
     return (
@@ -77,21 +98,25 @@ function App() {
             <header className="header">
                 <div className="header-content">
                     <h1>🥨 Snack Cupboard</h1>
-                    <div className="header-actions">
-                        <button className="settings-btn" aria-label="Open menu" onClick={() => setShowMenu(!showMenu)}>
+                    {currentPage === 'admin' ? (
+                        <button
+                            className="settings-btn"
+                            aria-label="Return home"
+                            onClick={handleHomeClick}
+                            title="Back to User Portal"
+                        >
+                            <Home size={22} />
+                        </button>
+                    ) : (
+                        <button
+                            className="settings-btn"
+                            aria-label="Admin settings"
+                            onClick={handleAdminAccess}
+                            title="Admin Panel"
+                        >
                             <Settings size={22} />
                         </button>
-                        {showMenu && (
-                            <nav className="settings-menu" role="menu">
-                                <button role="menuitem" onClick={() => { setCurrentPage('user-selection'); setBasket([]); setSelectedStaff(null); setShowMenu(false); }}>
-                                    User Portal
-                                </button>
-                                <button role="menuitem" onClick={() => { setCurrentPage('admin'); setShowMenu(false); }}>
-                                    Admin Panel
-                                </button>
-                            </nav>
-                        )}
-                    </div>
+                    )}
                 </div>
             </header>
 
@@ -107,6 +132,7 @@ function App() {
                                 <h2>Welcome, {selectedStaff.forename} {selectedStaff.surname}</h2>
                                 <button className="back-btn" onClick={handleBack}>Back</button>
                             </div>
+                            <h2 className="items-section-title">Select Items</h2>
                             <div className="item-basket-layout">
                                 <ItemSelection onAddToBasket={handleAddToBasket} />
                                 <Basket
@@ -119,11 +145,17 @@ function App() {
                         </div>
                     )}
 
-                    {currentPage === 'admin' && (
-                        <AdminPanel onBack={handleBack} />
+                    {currentPage === 'admin' && isAuthenticated && (
+                        <AdminPanel />
                     )}
                 </main>
             </div>
+
+            <PasswordModal
+                open={showPasswordModal}
+                onSubmit={handlePasswordSubmit}
+                onCancel={() => setShowPasswordModal(false)}
+            />
         </div>
     );
 }

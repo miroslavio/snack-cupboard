@@ -1,3 +1,5 @@
+@import './admin-common.css';
+
 .staff-management textarea {
     width: 100%;
     font-family: monospace;
@@ -49,8 +51,6 @@
     max-height: 350px;
     overflow: auto;
 }
-
-@import './admin-common.css';
 
 .staff-row {
     display: flex;

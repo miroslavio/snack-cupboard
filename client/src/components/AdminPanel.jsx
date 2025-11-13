@@ -6,14 +6,13 @@ import ItemsManagement from './admin/ItemsManagement';
 import PurchasesExport from './admin/PurchasesExport';
 import './AdminPanel.css';
 
-export default function AdminPanel({ onBack }) {
+export default function AdminPanel() {
     const [activeTab, setActiveTab] = useState('staff');
 
     return (
         <div className="admin-panel">
             <div className="admin-header">
                 <h2>Admin Panel</h2>
-                <button className="back-btn" onClick={onBack}>← Back</button>
             </div>
 
             <div className="admin-tabs">

@@ -43,18 +43,15 @@ export default function ItemSelection({ onAddToBasket }) {
 
     return (
         <div className="item-selection">
-            <div className="items-header">
-                <h2>Select Items</h2>
-                <div className="search-container">
-                    <Search size={20} />
-                    <input
-                        type="text"
-                        placeholder="Search items..."
-                        value={search}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="search-input"
-                    />
-                </div>
+            <div className="search-container">
+                <Search size={20} />
+                <input
+                    type="text"
+                    placeholder="Search items..."
+                    value={search}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    className="search-input"
+                />
             </div>
 
             {loading ? (

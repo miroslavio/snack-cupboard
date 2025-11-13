@@ -1,14 +1,8 @@
 .item-selection {
     width: 100%;
-}
-
-.items-header {
-    margin-bottom: 1.5rem;
-}
-
-.items-header h2 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .search-container {
@@ -75,9 +69,10 @@
 }
 
 .item-card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 1rem;
     flex: 1;
 }
 
@@ -85,12 +80,16 @@
     font-size: 1rem;
     font-weight: 600;
     color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .item-price {
     font-size: 0.95rem;
     color: #667eea;
     font-weight: 700;
+    text-align: right;
 }
 
 .item-action {
@@ -120,6 +119,11 @@
 
     .item-card {
         padding: 0.75rem 1rem;
+    }
+
+    .item-card-content {
+        grid-template-columns: 1fr auto;
+        gap: 0.5rem;
     }
 
     .item-action {
