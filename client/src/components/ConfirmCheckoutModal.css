@@ -1,0 +1,127 @@
+/* ConfirmCheckoutModal.css */
+.confirm-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.confirm-modal {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    max-width: 480px;
+    width: 100%;
+}
+
+.confirm-title {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.confirm-message {
+    color: #444;
+    margin-bottom: 1.2rem;
+    font-size: 1rem;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.confirm-btn {
+    padding: 0.6rem 1.3rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.confirm-cancel {
+    background: #eee;
+    color: #333;
+}
+
+.confirm-ok {
+    background: #667eea;
+    color: white;
+}
+
+.confirm-ok:hover {
+    filter: brightness(0.95);
+}
+
+.confirm-cancel:hover {
+    filter: brightness(0.98);
+}
+
+.confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.success-container {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.success-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    font-weight: bold;
+    animation: successPulse 0.5s ease;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+    color: #4CAF50;
+    font-weight: 700;
+}
+
+.success-message {
+    margin: 0;
+    color: #666;
+    font-size: 1rem;
+}
+
+.error-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}

@@ -6,7 +6,9 @@ import ItemSelection from './components/ItemSelection';
 import Basket from './components/Basket';
 import AdminPanel from './components/AdminPanel';
 import PasswordModal from './components/PasswordModal';
+import ConfirmCheckoutModal from './components/ConfirmCheckoutModal';
 import { Settings, Home } from 'lucide-react';
+
 
 function App() {
     const [currentPage, setCurrentPage] = useState('user-selection');
@@ -15,6 +17,10 @@ function App() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [checkoutError, setCheckoutError] = useState('');
+    const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
     const handleSelectStaff = (staff) => {
         setSelectedStaff(staff);
@@ -44,21 +50,37 @@ function App() {
         }
     };
 
-    const handleCheckout = async () => {
+    // Show modal instead of direct checkout
+    const handleCheckout = () => {
         if (!selectedStaff || basket.length === 0) return;
+        setShowCheckoutModal(true);
+        setCheckoutError('');
+        setCheckoutSuccess(false);
+    };
 
+    // Called when user confirms in modal
+    const handleConfirmCheckout = async () => {
+        setCheckoutLoading(true);
+        setCheckoutError('');
         try {
             await axios.post('/api/purchases', {
                 staffId: selectedStaff.staffId,
                 items: basket
             });
+            setCheckoutLoading(false);
+            setCheckoutSuccess(true);
 
-            setBasket([]);
-            setSelectedStaff(null);
-            setCurrentPage('user-selection');
-            alert('Purchase recorded successfully!');
+            // Wait 1.5s to show success message, then close and reset
+            setTimeout(() => {
+                setBasket([]);
+                setSelectedStaff(null);
+                setCurrentPage('user-selection');
+                setShowCheckoutModal(false);
+                setCheckoutSuccess(false);
+            }, 1500);
         } catch (err) {
-            alert('Error recording purchase: ' + err.message);
+            setCheckoutError('Error recording purchase: ' + (err.response?.data?.error ?? err.message));
+            setCheckoutLoading(false);
         }
     };
 
@@ -72,13 +94,16 @@ function App() {
             setIsAuthenticated(true);
             setCurrentPage('admin');
             setShowPasswordModal(false);
+            return true;
         } else {
-            alert('Incorrect password');
+            return false;
         }
     };
 
     const handleHomeClick = () => {
         setIsAuthenticated(false);
+        setSelectedStaff(null);
+        setBasket([]);
         setCurrentPage('user-selection');
     };
 
@@ -93,11 +118,13 @@ function App() {
         }
     };
 
+    const total = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
     return (
         <div className="App">
             <header className="header">
                 <div className="header-content">
-                    <h1>🥨 Snack Cupboard</h1>
+                    <h1 onClick={handleHomeClick} style={{ cursor: 'pointer' }} title="Return to Home">🥨 Snack Cupboard</h1>
                     {currentPage === 'admin' ? (
                         <button
                             className="settings-btn"
@@ -155,6 +182,20 @@ function App() {
                 onSubmit={handlePasswordSubmit}
                 onCancel={() => setShowPasswordModal(false)}
             />
+
+            <ConfirmCheckoutModal
+                open={showCheckoutModal}
+                staff={selectedStaff}
+                items={basket}
+                total={total}
+                loading={checkoutLoading}
+                success={checkoutSuccess}
+                error={checkoutError}
+                onConfirm={handleConfirmCheckout}
+                onCancel={() => setShowCheckoutModal(false)}
+            />
+            {/* Optionally show error in modal if needed */}
+            {/* {checkoutError && <div className="message" style={{ color: 'red' }}>{checkoutError}</div>} */}
         </div>
     );
 }

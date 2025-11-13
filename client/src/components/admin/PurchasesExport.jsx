@@ -18,7 +18,11 @@ export default function PurchasesExport() {
             window.URL.revokeObjectURL(url);
             setMessage('Export started');
         } catch (err) {
-            setMessage('Error exporting purchases: ' + (err.response?.data?.error ?? err.message));
+            if (err.response?.status === 400) {
+                setMessage('No purchases available to export');
+            } else {
+                setMessage('Error exporting purchases: ' + (err.response?.data?.error ?? err.message));
+            }
         }
     };
 

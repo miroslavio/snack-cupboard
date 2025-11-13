@@ -29,7 +29,10 @@ export default function PasswordModal({ open, onSubmit, onCancel }) {
             setError('Please enter a password');
             return;
         }
-        onSubmit(password);
+        const success = onSubmit(password);
+        if (success === false) {
+            setError('Incorrect password');
+        }
     };
 
     if (!open) return null;
