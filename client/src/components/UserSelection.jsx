@@ -54,7 +54,7 @@ export default function UserSelection({ onSelectStaff }) {
                 <Search size={20} />
                 <input
                     type="text"
-                    placeholder="Search by name, initials, or staff ID..."
+                    placeholder="Search by name or initials"
                     value={search}
                     onChange={(e) => handleSearch(e.target.value)}
                     className="search-input"
@@ -81,7 +81,6 @@ export default function UserSelection({ onSelectStaff }) {
                                 </div>
                                 <div className="staff-info">
                                     <span className="initials">{member.initials}</span>
-                                    <span className="staff-id">{member.staffId}</span>
                                 </div>
                             </div>
                         </button>

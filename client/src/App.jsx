@@ -121,7 +121,7 @@ function App() {
             </header>
 
             <div className="container">
-                <main className="main-content">
+                <main className={`main-content ${currentPage === 'item-selection' ? 'no-scroll' : ''}`}>
                     {currentPage === 'user-selection' && !selectedStaff && (
                         <UserSelection onSelectStaff={handleSelectStaff} />
                     )}
@@ -132,7 +132,6 @@ function App() {
                                 <h2>Welcome, {selectedStaff.forename} {selectedStaff.surname}</h2>
                                 <button className="back-btn" onClick={handleBack}>Back</button>
                             </div>
-                            <h2 className="items-section-title">Select Items</h2>
                             <div className="item-basket-layout">
                                 <ItemSelection onAddToBasket={handleAddToBasket} />
                                 <Basket

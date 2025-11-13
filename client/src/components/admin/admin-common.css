@@ -1,21 +1,24 @@
 /* Shared admin styles for Items and Staff management pages */
 
 .items-management .search-input,
-.staff-management .search-input {
+.staff-management .search-input,
+.purchases-management .search-input {
     padding: 0.5rem;
     border-radius: 6px;
     border: 1px solid #ddd;
 }
 
 .items-management input,
-.staff-management input {
+.staff-management input,
+.purchases-management input {
     padding: 0.5rem;
     border-radius: 6px;
     border: 2px solid #ddd;
 }
 
 .items-management textarea,
-.staff-management textarea {
+.staff-management textarea,
+.purchases-management textarea {
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.75rem;
@@ -25,17 +28,19 @@
 }
 
 .items-management .items-list,
-.staff-management .staff-list {
+.staff-management .staff-list,
+.purchases-management .purchases-list {
     background: white;
     border: 2px solid #eee;
     border-radius: 8px;
     padding: 0.5rem;
-    max-height: 350px;
+    max-height: calc(100vh - 350px);
     overflow: auto;
 }
 
 .items-management .item-row,
-.staff-management .staff-row {
+.staff-management .staff-row,
+.purchases-management .purchase-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -44,7 +49,8 @@
 }
 
 .items-management .item-row:last-child,
-.staff-management .staff-row:last-child {
+.staff-management .staff-row:last-child,
+.purchases-management .purchase-row:last-child {
     border-bottom: none;
 }
 
@@ -58,14 +64,16 @@
 }
 
 .items-management .message,
-.staff-management .message {
+.staff-management .message,
+.purchases-management .message {
     margin-top: 0.75rem;
     color: #333;
 }
 
 /* Table buttons - Edit/Save/Cancel */
 .items-management .table-button,
-.staff-management .table-button {
+.staff-management .table-button,
+.purchases-management .table-button {
     background: #667eea;
     color: white;
     border: none;
@@ -75,13 +83,15 @@
 }
 
 .items-management .table-button:hover,
-.staff-management .table-button:hover {
+.staff-management .table-button:hover,
+.purchases-management .table-button:hover {
     opacity: 0.9;
 }
 
 /* Delete button specific styling */
 .items-management .delete-btn,
-.staff-management .delete-btn {
+.staff-management .delete-btn,
+.purchases-management .delete-btn {
     background: #ff6b6b;
     color: white;
     border: none;
@@ -91,7 +101,8 @@
 }
 
 .items-management .delete-btn:hover,
-.staff-management .delete-btn:hover {
+.staff-management .delete-btn:hover,
+.purchases-management .delete-btn:hover {
     background: #ff5252;
 }
 
@@ -112,14 +123,16 @@
 
 /* Table styles for consistent column alignment */
 .items-management table,
-.staff-management table {
+.staff-management table,
+.purchases-management table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 0.75rem;
 }
 
 .items-management thead th,
-.staff-management thead th {
+.staff-management thead th,
+.purchases-management thead th {
     text-align: left;
     padding: 0.75rem 0.5rem;
     border-bottom: 2px solid #eee;
@@ -127,27 +140,37 @@
 }
 
 .items-management tbody td,
-.staff-management tbody td {
+.staff-management tbody td,
+.purchases-management tbody td {
     padding: 0.6rem 0.5rem;
     border-bottom: 1px solid #f5f5f5;
     vertical-align: middle;
 }
 
 .items-management tbody tr:last-child td,
-.staff-management tbody tr:last-child td {
+.staff-management tbody tr:last-child td,
+.purchases-management tbody tr:last-child td {
     border-bottom: none;
 }
 
 .items-management .col-actions,
-.staff-management .col-actions {
+.staff-management .col-actions,
+.purchases-management .col-actions {
     width: 220px;
     text-align: right;
 }
 
-.items-management .col-price {
+.items-management .col-price,
+.purchases-management .col-price {
     width: 110px;
     text-align: right;
     color: #333;
+}
+
+.purchases-management .col-quantity {
+    width: 80px;
+    text-align: center;
+    color: #666;
 }
 
 .staff-management .col-staffid {
@@ -157,12 +180,14 @@
 }
 
 .items-management .edit-input,
-.staff-management .edit-input {
+.staff-management .edit-input,
+.purchases-management .edit-input {
     max-width: 100%;
 }
 
 .items-management .table-button,
-.staff-management .table-button {
+.staff-management .table-button,
+.purchases-management .table-button {
     margin-left: 8px;
 }
 

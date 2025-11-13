@@ -8,6 +8,7 @@ export default function ItemsManagement() {
     const [items, setItems] = useState([]);
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
+    const [category, setCategory] = useState('Food');
     const [csvText, setCsvText] = useState('');
     const [message, setMessage] = useState('');
     const [search, setSearch] = useState('');
@@ -16,6 +17,7 @@ export default function ItemsManagement() {
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [editPrice, setEditPrice] = useState('');
+    const [editCategory, setEditCategory] = useState('Food');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImportForm, setShowImportForm] = useState(false);
 
@@ -39,8 +41,8 @@ export default function ItemsManagement() {
             if (items.some(i => i.name.toLowerCase() === name.toLowerCase())) {
                 return setMessage('An item with that name already exists');
             }
-            await axios.post('/api/items', { name, price: p });
-            setName(''); setPrice('');
+            await axios.post('/api/items', { name, price: p, category });
+            setName(''); setPrice(''); setCategory('Food');
             setShowAddForm(false);
             fetchItems();
             setMessage('Item added');
@@ -82,6 +84,7 @@ export default function ItemsManagement() {
         setEditingId(item.id);
         setEditName(item.name || '');
         setEditPrice(item.price != null ? String(item.price) : '');
+        setEditCategory(item.category || 'Food');
         setMessage('');
     };
 
@@ -89,6 +92,7 @@ export default function ItemsManagement() {
         setEditingId(null);
         setEditName('');
         setEditPrice('');
+        setEditCategory('Food');
     };
 
     const saveEdit = async (id) => {
@@ -99,7 +103,7 @@ export default function ItemsManagement() {
             if (items.some(i => i.name.toLowerCase() === editName.toLowerCase() && i.id !== id)) {
                 return setMessage('Another item with that name already exists');
             }
-            const res = await axios.put(`/api/items/${id}`, { name: editName, price: p });
+            const res = await axios.put(`/api/items/${id}`, { name: editName, price: p, category: editCategory });
             setMessage(res.data?.message || 'Item updated');
             cancelEdit();
             fetchItems();
@@ -153,6 +157,7 @@ export default function ItemsManagement() {
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Category</th>
                             <th className="col-price">Price</th>
                             <th className="col-actions">Actions</th>
                         </tr>
@@ -165,6 +170,12 @@ export default function ItemsManagement() {
                                         <td>
                                             <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
                                         </td>
+                                        <td>
+                                            <select className="edit-input" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                                                <option value="Food">Food</option>
+                                                <option value="Drink">Drink</option>
+                                            </select>
+                                        </td>
                                         <td className="col-price">
                                             <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
                                         </td>
@@ -176,6 +187,7 @@ export default function ItemsManagement() {
                                 ) : (
                                     <>
                                         <td className="item-main">{it.name}</td>
+                                        <td>{it.category || 'Food'}</td>
                                         <td className="col-price">£{it.price.toFixed(2)}</td>
                                         <td className="col-actions">
                                             <button onClick={() => startEdit(it)} className="table-button">Edit</button>
@@ -193,14 +205,14 @@ export default function ItemsManagement() {
 
             <FormModal open={showImportForm} title="Import Items (CSV)" onClose={() => { setCsvText(''); setShowImportForm(false); }}>
                 <div style={{ marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: name,price</p>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: name,price,category (category is optional, defaults to Food)</p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
                     <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
                     <textarea
                         rows={8}
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
-                        placeholder={`name,price\nChocolate Bar,1.25\nCoke,1.50`}
+                        placeholder={`name,price,category\nChocolate Bar,1.25,Food\nCoke,1.50,Drink`}
                         style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
                     />
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing items</p>
@@ -211,13 +223,17 @@ export default function ItemsManagement() {
                 </div>
             </FormModal>
 
-            <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setShowAddForm(false); }}>
+            <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); }}>
                 <div className="add-item">
                     <input value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus />
+                    <select value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontSize: '1rem' }}>
+                        <option value="Food">Food</option>
+                        <option value="Drink">Drink</option>
+                    </select>
                     <input value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} />
                 </div>
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setName(''); setPrice(''); setShowAddForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleAdd}>Add Item</button>
                 </div>
             </FormModal>

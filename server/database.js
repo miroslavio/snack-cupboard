@@ -29,9 +29,20 @@ export function initializeDatabase() {
         CREATE TABLE IF NOT EXISTS items (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT UNIQUE NOT NULL,
-          price REAL NOT NULL
+          price REAL NOT NULL,
+          category TEXT DEFAULT 'Food'
         )
       `);
+
+            // Add category column to existing items table if it doesn't exist
+            db.run(`
+        ALTER TABLE items ADD COLUMN category TEXT DEFAULT 'Food'
+      `, (err) => {
+                // Ignore error if column already exists
+                if (err && !err.message.includes('duplicate column')) {
+                    console.error('Error adding category column:', err.message);
+                }
+            });
 
             // Purchases table
             db.run(`

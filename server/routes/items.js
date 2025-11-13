@@ -41,7 +41,7 @@ router.get('/:id', async (req, res) => {
 // Create item
 router.post('/', async (req, res) => {
     try {
-        const { name, price } = req.body;
+        const { name, price, category } = req.body;
         if (!name || price === undefined) {
             return res.status(400).json({ error: 'Name and price are required' });
         }
@@ -53,11 +53,11 @@ router.post('/', async (req, res) => {
         }
 
         const result = await runAsync(
-            'INSERT INTO items (name, price) VALUES (?, ?)',
-            [name, price]
+            'INSERT INTO items (name, price, category) VALUES (?, ?, ?)',
+            [name, price, category || 'Food']
         );
 
-        res.json({ id: result.lastID, name, price });
+        res.json({ id: result.lastID, name, price, category: category || 'Food' });
     } catch (err) {
         if (err.message.includes('UNIQUE')) {
             return res.status(400).json({ error: 'Item already exists' });
@@ -70,7 +70,7 @@ router.post('/', async (req, res) => {
 // Update item
 router.put('/:id', async (req, res) => {
     try {
-        const { name, price } = req.body;
+        const { name, price, category } = req.body;
         if (!name || price === undefined) {
             return res.status(400).json({ error: 'Name and price are required' });
         }
@@ -82,8 +82,8 @@ router.put('/:id', async (req, res) => {
         }
 
         await runAsync(
-            'UPDATE items SET name = ?, price = ? WHERE id = ?',
-            [name, price, req.params.id]
+            'UPDATE items SET name = ?, price = ?, category = ? WHERE id = ?',
+            [name, price, category || 'Food', req.params.id]
         );
 
         const item = await getAsync('SELECT * FROM items WHERE id = ?', [req.params.id]);
@@ -117,9 +117,10 @@ router.post('/import-csv', express.text({ type: 'text/csv' }), async (req, res) 
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
         const nameIdx = headers.indexOf('name');
         const priceIdx = headers.indexOf('price');
+        const categoryIdx = headers.indexOf('category');
 
         if (nameIdx === -1 || priceIdx === -1) {
-            return res.status(400).json({ error: 'CSV must have columns: name, price' });
+            return res.status(400).json({ error: 'CSV must have columns: name, price (category is optional)' });
         }
 
         // Clear existing items
@@ -134,9 +135,11 @@ router.post('/import-csv', express.text({ type: 'text/csv' }), async (req, res) 
                     const price = parseFloat(parts[priceIdx]);
                     if (isNaN(price)) continue;
 
+                    const category = categoryIdx !== -1 && parts[categoryIdx] ? parts[categoryIdx] : 'Food';
+
                     await runAsync(
-                        'INSERT INTO items (name, price) VALUES (?, ?)',
-                        [parts[nameIdx], price]
+                        'INSERT INTO items (name, price, category) VALUES (?, ?, ?)',
+                        [parts[nameIdx], price, category]
                     );
                     imported++;
                 } catch (err) {

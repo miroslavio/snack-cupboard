@@ -40,6 +40,7 @@ router.get('/', async (req, res) => {
         i.name as itemName,
         p.quantity,
         p.price,
+        (p.price * p.quantity) as totalPrice,
         p.timestamp
       FROM purchases p
       JOIN staff s ON p.staffId = s.staffId
@@ -48,6 +49,49 @@ router.get('/', async (req, res) => {
     `);
 
         res.json(purchases);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update a purchase
+router.put('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { staffId, itemName, quantity, totalPrice } = req.body;
+
+        if (!staffId || !itemName || !quantity || !totalPrice) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        // Find the item ID by name
+        const item = await allAsync('SELECT id FROM items WHERE name = ?', [itemName]);
+        if (!item || item.length === 0) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        const itemId = item[0].id;
+        const price = totalPrice / quantity; // Calculate unit price
+
+        await runAsync(
+            'UPDATE purchases SET staffId = ?, itemId = ?, quantity = ?, price = ? WHERE id = ?',
+            [staffId, itemId, quantity, price, id]
+        );
+
+        res.json({ message: 'Purchase updated successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete a purchase
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await runAsync('DELETE FROM purchases WHERE id = ?', [id]);
+        res.json({ message: 'Purchase deleted successfully' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
