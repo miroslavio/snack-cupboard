@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Search } from 'lucide-react';
 import './admin-common.css';
 import ConfirmModal from '../ConfirmModal';
 
@@ -123,13 +124,13 @@ export default function PurchasesManagement() {
     };
 
     const filtered = purchases.filter(p => {
-        if (!search) return true;
         const q = search.toLowerCase();
+        const termYear = p.term && p.academic_year ? `${p.term} ${p.academic_year}` : '';
         return (
-            p.forename?.toLowerCase().includes(q) ||
-            p.surname?.toLowerCase().includes(q) ||
             `${p.forename} ${p.surname}`.toLowerCase().includes(q) ||
+            p.staffId?.toLowerCase().includes(q) ||
             p.itemName?.toLowerCase().includes(q) ||
+            termYear.toLowerCase().includes(q) ||
             new Date(p.timestamp).toLocaleDateString().includes(q)
         );
     });
@@ -148,11 +149,11 @@ export default function PurchasesManagement() {
     return (
         <div className="purchases-management">
             <div className="search-bar-container">
-                <div className="search-wrapper">
-                    <span className="search-icon">🔍</span>
+                <div className="search-container">
+                    <Search size={20} />
                     <input
                         className="search-input"
-                        placeholder="Search purchases..."
+                        placeholder="Search purchases"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
@@ -168,12 +169,13 @@ export default function PurchasesManagement() {
                             <th>Item</th>
                             <th className="col-quantity">Qty</th>
                             <th className="col-price">Total</th>
+                            <th>Term</th>
                             <th className="col-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filtered.length === 0 ? (
-                            <tr><td colSpan={6} className="no-results">No purchases found</td></tr>
+                            <tr><td colSpan={7} className="no-results">No purchases found</td></tr>
                         ) : (
                             filtered.map(p => (
                                 <tr key={p.id}>
@@ -235,6 +237,7 @@ export default function PurchasesManagement() {
                                                     }}
                                                 />
                                             </td>
+                                            <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
                                             <td className="col-actions">
                                                 <button onClick={() => saveEdit(p.id)} className="table-button">Save</button>
                                                 <button onClick={cancelEdit} className="table-button">Cancel</button>
@@ -247,6 +250,7 @@ export default function PurchasesManagement() {
                                             <td>{p.itemName}</td>
                                             <td className="col-quantity">{p.quantity}</td>
                                             <td className="col-price">£{p.totalPrice.toFixed(2)}</td>
+                                            <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
                                             <td className="col-actions">
                                                 <button onClick={() => startEdit(p)} className="table-button">Edit</button>
                                                 <button onClick={() => handleDeleteRequest(p)} className="delete-btn table-button">Delete</button>

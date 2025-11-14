@@ -47,7 +47,6 @@ export default function UserSelection({ onSelectStaff }) {
         <div className="user-selection">
             <div className="selection-title">
                 <h2>Select Your Name</h2>
-                <p>Alphabetically sorted list of staff members</p>
             </div>
 
             <div className="search-container">

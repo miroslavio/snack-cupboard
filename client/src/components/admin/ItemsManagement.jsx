@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Search } from 'lucide-react';
 import './items.css';
 import ConfirmModal from '../ConfirmModal';
 import FormModal from '../FormModal';
@@ -37,13 +38,11 @@ export default function ItemsManagement() {
         try {
             const p = parseFloat(price);
             if (!name || isNaN(p)) return setMessage('Name and valid price required');
-            // Client-side duplicate check (case-insensitive)
-            if (items.some(i => i.name.toLowerCase() === name.toLowerCase())) {
-                return setMessage('An item with that name already exists');
-            }
+            // Client-side duplicate check removed - server handles it and will restore archived items
             await axios.post('/api/items', { name, price: p, category });
             setName(''); setPrice(''); setCategory('Food');
             setShowAddForm(false);
+            setMessage('');
             fetchItems();
             setMessage('Item added');
         } catch (err) {
@@ -144,9 +143,9 @@ export default function ItemsManagement() {
     return (
         <div className="items-management">
             <div className="search-bar-container">
-                <div className="search-wrapper">
-                    <span className="search-icon">🔍</span>
-                    <input className="search-input" placeholder="Search" value={search} onChange={e => setSearch(e.target.value)} />
+                <div className="search-container">
+                    <Search size={20} />
+                    <input className="search-input" placeholder="Search items" value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
                 <button className="add-button secondary" onClick={() => setShowImportForm(true)}>Import</button>
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
@@ -223,17 +222,31 @@ export default function ItemsManagement() {
                 </div>
             </FormModal>
 
-            <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); }}>
-                <div className="add-item">
-                    <input value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus />
-                    <select value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontSize: '1rem' }}>
-                        <option value="Food">Food</option>
-                        <option value="Drink">Drink</option>
-                    </select>
-                    <input value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} />
+            <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); setMessage(''); }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="item-name" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Item Name</label>
+                        <input id="item-name" value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="item-category" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Category</label>
+                        <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }}>
+                            <option value="Food">Food</option>
+                            <option value="Drink">Drink</option>
+                        </select>
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="item-price" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Price</label>
+                        <input id="item-price" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
                 </div>
+                {message && showAddForm && (
+                    <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
+                        {message}
+                    </div>
+                )}
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); setMessage(''); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleAdd}>Add Item</button>
                 </div>
             </FormModal>

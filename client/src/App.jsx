@@ -21,6 +21,22 @@ function App() {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [checkoutError, setCheckoutError] = useState('');
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+    const [currentTerm, setCurrentTerm] = useState('');
+    const [currentYear, setCurrentYear] = useState('');
+
+    useEffect(() => {
+        fetchCurrentTerm();
+    }, []);
+
+    const fetchCurrentTerm = async () => {
+        try {
+            const response = await axios.get('/api/settings/current');
+            setCurrentTerm(response.data.term);
+            setCurrentYear(response.data.academic_year);
+        } catch (err) {
+            console.error('Error fetching current term:', err);
+        }
+    };
 
     const handleSelectStaff = (staff) => {
         setSelectedStaff(staff);
@@ -125,25 +141,30 @@ function App() {
             <header className="header">
                 <div className="header-content">
                     <h1 onClick={handleHomeClick} style={{ cursor: 'pointer' }} title="Return to Home">🥨 Snack Cupboard</h1>
-                    {currentPage === 'admin' ? (
-                        <button
-                            className="settings-btn"
-                            aria-label="Return home"
-                            onClick={handleHomeClick}
-                            title="Back to User Portal"
-                        >
-                            <Home size={22} />
-                        </button>
-                    ) : (
-                        <button
-                            className="settings-btn"
-                            aria-label="Admin settings"
-                            onClick={handleAdminAccess}
-                            title="Admin Panel"
-                        >
-                            <Settings size={22} />
-                        </button>
-                    )}
+                    <div className="header-right">
+                        {currentTerm && currentYear && currentPage !== 'admin' && (
+                            <span className="header-term-badge">{currentTerm} {currentYear}</span>
+                        )}
+                        {currentPage === 'admin' ? (
+                            <button
+                                className="settings-btn"
+                                aria-label="Return home"
+                                onClick={handleHomeClick}
+                                title="Back to User Portal"
+                            >
+                                <Home size={22} />
+                            </button>
+                        ) : (
+                            <button
+                                className="settings-btn"
+                                aria-label="Admin settings"
+                                onClick={handleAdminAccess}
+                                title="Admin Panel"
+                            >
+                                <Settings size={22} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -172,7 +193,7 @@ function App() {
                     )}
 
                     {currentPage === 'admin' && isAuthenticated && (
-                        <AdminPanel />
+                        <AdminPanel onTermChange={fetchCurrentTerm} />
                     )}
                 </main>
             </div>

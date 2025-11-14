@@ -20,10 +20,12 @@ export default function FormModal({ open, title, onClose, children }) {
     return (
         <div className="form-modal-overlay" onClick={onClose}>
             <div className="form-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="form-modal-header">
-                    <h3>{title}</h3>
-                    <button className="form-modal-close" onClick={onClose}>×</button>
-                </div>
+                {title && (
+                    <div className="form-modal-header">
+                        <h3>{title}</h3>
+                        <button className="form-modal-close" onClick={onClose}>×</button>
+                    </div>
+                )}
                 <div className="form-modal-content">
                     {children}
                 </div>

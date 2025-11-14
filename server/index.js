@@ -6,6 +6,7 @@ import { initializeDatabase, allAsync, getAsync, runAsync } from './database.js'
 import staffRoutes from './routes/staff.js';
 import itemRoutes from './routes/items.js';
 import purchaseRoutes from './routes/purchases.js';
+import settingsRoutes from './routes/settings.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ await initializeDatabase();
 app.use('/api/staff', staffRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/purchases', purchaseRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Search } from 'lucide-react';
 import './staff.css';
 import ConfirmModal from '../ConfirmModal';
 import FormModal from '../FormModal';
@@ -69,9 +70,6 @@ export default function StaffManagement() {
     const handleAdd = async () => {
         try {
             if (!newStaffId || !newInitials || !newForename || !newSurname) return setMessage('All fields required');
-            // client-side duplicate check for StaffID
-            const exists = staffList.some(s => s.staffId && s.staffId.toLowerCase() === newStaffId.trim().toLowerCase());
-            if (exists) return setMessage('A staff member with that StaffID already exists');
             const res = await axios.post('/api/staff', {
                 staffId: newStaffId,
                 initials: newInitials,
@@ -81,6 +79,7 @@ export default function StaffManagement() {
             setMessage(res.data.message || 'Staff added');
             setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
             setShowAddForm(false);
+            setMessage('');
             fetchStaff();
         } catch (err) {
             setMessage('Error adding staff: ' + (err.response?.data?.error ?? err.message));
@@ -94,6 +93,7 @@ export default function StaffManagement() {
         } else if (e.key === 'Escape') {
             setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
             setShowAddForm(false);
+            setMessage('');
         }
     }
 
@@ -161,9 +161,9 @@ export default function StaffManagement() {
     return (
         <div className="staff-management">
             <div className="search-bar-container">
-                <div className="search-wrapper">
-                    <span className="search-icon">🔍</span>
-                    <input className="search-input" placeholder="Search" value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} />
+                <div className="search-container">
+                    <Search size={20} />
+                    <input className="search-input" placeholder="Search staff" value={search} onChange={e => { setSearch(e.target.value); fetchStaff(e.target.value); }} />
                 </div>
                 <button className="add-button secondary" onClick={() => setShowImportForm(true)}>Import</button>
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
@@ -244,15 +244,32 @@ export default function StaffManagement() {
                 </div>
             </FormModal>
 
-            <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); }}>
-                <div className="staff-add">
-                    <input placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus />
-                    <input placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} />
-                    <input placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} />
-                    <input placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} />
+            <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="staff-id" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Staff ID</label>
+                        <input id="staff-id" placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="staff-initials" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Initials</label>
+                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="staff-forename" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Forename</label>
+                        <input id="staff-forename" placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
+                    <div style={{ marginBottom: '12px' }}>
+                        <label htmlFor="staff-surname" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Surname</label>
+                        <input id="staff-surname" placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                    </div>
                 </div>
+                {message && showAddForm && (
+                    <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
+                        {message}
+                    </div>
+                )}
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
                 </div>
             </FormModal>

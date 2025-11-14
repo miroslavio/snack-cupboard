@@ -3,16 +3,27 @@ import { allAsync, runAsync, getAsync } from '../database.js';
 
 const router = express.Router();
 
-// Get all items
+// Get all items (exclude archived)
 router.get('/', async (req, res) => {
     try {
         const search = req.query.search || '';
+        const includeArchived = req.query.includeArchived === 'true';
+
         let query = 'SELECT * FROM items';
         const params = [];
+        const conditions = [];
+
+        if (!includeArchived) {
+            conditions.push('archived_at IS NULL');
+        }
 
         if (search) {
-            query += ' WHERE name LIKE ?';
+            conditions.push('name LIKE ?');
             params.push(`%${search}%`);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
         }
 
         query += ' ORDER BY name ASC';
@@ -46,8 +57,27 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Name and price are required' });
         }
 
-        // Check duplicate name (case-insensitive)
-        const existing = await getAsync('SELECT id FROM items WHERE LOWER(name) = LOWER(?)', [name]);
+        // Check for archived item with same name
+        const archived = await getAsync(
+            'SELECT id FROM items WHERE LOWER(name) = LOWER(?) AND archived_at IS NOT NULL',
+            [name]
+        );
+
+        if (archived) {
+            // Restore and update the archived item
+            await runAsync(
+                'UPDATE items SET archived_at = NULL, price = ?, category = ? WHERE id = ?',
+                [price, category || 'Food', archived.id]
+            );
+            const restored = await getAsync('SELECT * FROM items WHERE id = ?', [archived.id]);
+            return res.json(restored);
+        }
+
+        // Check duplicate name in active items (case-insensitive)
+        const existing = await getAsync(
+            'SELECT id FROM items WHERE LOWER(name) = LOWER(?) AND archived_at IS NULL',
+            [name]
+        );
         if (existing) {
             return res.status(400).json({ error: 'Item already exists' });
         }
@@ -75,8 +105,11 @@ router.put('/:id', async (req, res) => {
             return res.status(400).json({ error: 'Name and price are required' });
         }
 
-        // Check for duplicate name on other items
-        const existing = await getAsync('SELECT id FROM items WHERE LOWER(name) = LOWER(?) AND id != ?', [name, req.params.id]);
+        // Check for duplicate name on other active items
+        const existing = await getAsync(
+            'SELECT id FROM items WHERE LOWER(name) = LOWER(?) AND id != ? AND archived_at IS NULL',
+            [name, req.params.id]
+        );
         if (existing) {
             return res.status(400).json({ error: 'Another item with that name already exists' });
         }
@@ -94,11 +127,22 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete item
+// Archive item (soft delete)
 router.delete('/:id', async (req, res) => {
     try {
-        await runAsync('DELETE FROM items WHERE id = ?', [req.params.id]);
-        res.json({ message: 'Item deleted' });
+        await runAsync('UPDATE items SET archived_at = CURRENT_TIMESTAMP WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Item archived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Restore archived item
+router.put('/:id/restore', async (req, res) => {
+    try {
+        await runAsync('UPDATE items SET archived_at = NULL WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Item restored' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
