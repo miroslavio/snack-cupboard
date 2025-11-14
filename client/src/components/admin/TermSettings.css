@@ -107,6 +107,15 @@
     border-bottom: none;
 }
 
+/* Subtle highlight for the currently active term row */
+.term-settings .terms-list tr.active-row {
+    box-shadow: inset 3px 0 0 #667eea;
+}
+
+.term-settings .terms-list tr.active-row td {
+    background: #f5f7ff;
+}
+
 .term-settings .terms-list td {
     padding: 0.6rem 0.5rem;
     vertical-align: middle;
@@ -145,13 +154,13 @@
     color: white;
     padding: 0.25rem 0.75rem;
     border-radius: 12px;
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 
 .term-settings .status-inactive {
     color: #999;
-    font-size: 0.85rem;
+    font-size: 1rem;
 }
 
 .term-settings .delete-warning {

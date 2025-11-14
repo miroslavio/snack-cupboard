@@ -295,7 +295,7 @@ function TermSettings({ onTermChange }) {
                             </thead>
                             <tbody>
                                 {allTerms.map((t, idx) => (
-                                    <tr key={idx}>
+                                    <tr key={idx} className={isActive(t.term, t.academic_year) ? 'active-row' : ''}>
                                         <td>{t.term} {t.academic_year}</td>
                                         <td className="col-purchases">{t.purchase_count || 0}</td>
                                         <td>
