@@ -59,11 +59,60 @@
     padding: 0.4rem;
     margin-bottom: 0.5rem;
     border-radius: 6px;
-    border: 1px solid #ddd;
+    border: 2px solid #ddd;
     width: 100%;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
 }
 
-.items-management .message,
+.edit-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Style select elements consistently with inputs */
+.items-management select.edit-input,
+.staff-management select.edit-input,
+.purchases-management select.edit-input {
+    padding: 0.4rem 2rem 0.4rem 0.4rem;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    font-size: 1rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 1em;
+    transition: all 0.2s ease;
+}
+
+.items-management select.edit-input:hover,
+.staff-management select.edit-input:hover,
+.purchases-management select.edit-input:hover {
+    border-color: #999;
+}
+
+.items-management select.edit-input:focus,
+.staff-management select.edit-input:focus,
+.purchases-management select.edit-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Style select dropdown options */
+.items-management select.edit-input option,
+.staff-management select.edit-input option,
+.purchases-management select.edit-input option {
+    padding: 0.5rem;
+    background: white;
+    color: #333;
+}
+
+.items-management .table-button,
 .staff-management .message,
 .purchases-management .message {
     margin-top: 0.75rem;
@@ -276,4 +325,49 @@
     margin-bottom: 0.75rem;
     /* spacing below title/search */
     gap: 0.5rem;
+}
+
+/* Item dropdown for purchase item editing */
+.item-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 2px;
+}
+
+.item-dropdown-option {
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.15s;
+}
+
+.item-dropdown-option:last-child {
+    border-bottom: none;
+}
+
+.item-dropdown-option:hover {
+    background: #f8f9ff;
+}
+
+.item-dropdown-option .item-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.item-dropdown-option .item-price {
+    color: #667eea;
+    font-weight: 600;
+    margin-left: 1rem;
 }

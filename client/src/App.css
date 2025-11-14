@@ -48,6 +48,8 @@
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -58,6 +60,7 @@
     flex: 1;
     padding: 2rem;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .main-content.no-scroll {

@@ -15,9 +15,12 @@ export default function PurchasesManagement() {
     const [editItemName, setEditItemName] = useState('');
     const [editQuantity, setEditQuantity] = useState('');
     const [editTotalPrice, setEditTotalPrice] = useState('');
+    const [items, setItems] = useState([]);
+    const [showItemDropdown, setShowItemDropdown] = useState(false);
 
     useEffect(() => {
         fetchPurchases();
+        fetchItems();
     }, []);
 
     const fetchPurchases = async () => {
@@ -29,6 +32,15 @@ export default function PurchasesManagement() {
         } catch (err) {
             console.error(err);
             setMessage('Error loading purchases');
+        }
+    };
+
+    const fetchItems = async () => {
+        try {
+            const res = await axios.get('/api/items');
+            setItems(res.data);
+        } catch (err) {
+            console.error('Error loading items:', err);
         }
     };
 
@@ -59,6 +71,7 @@ export default function PurchasesManagement() {
         setEditItemName(p.itemName || '');
         setEditQuantity(p.quantity != null ? String(p.quantity) : '');
         setEditTotalPrice(p.totalPrice != null ? String(p.totalPrice) : '');
+        setShowItemDropdown(false);
         setMessage('');
     };
 
@@ -69,6 +82,23 @@ export default function PurchasesManagement() {
         setEditItemName('');
         setEditQuantity('');
         setEditTotalPrice('');
+        setShowItemDropdown(false);
+    };
+
+    const handleSelectItem = (itemName) => {
+        setEditItemName(itemName);
+        setShowItemDropdown(false);
+    };
+
+    const handleItemInputChange = (value) => {
+        setEditItemName(value);
+        setShowItemDropdown(true);
+    };
+
+    const getFilteredItems = () => {
+        if (!editItemName) return items;
+        const query = editItemName.toLowerCase();
+        return items.filter(item => item.name.toLowerCase().includes(query));
     };
 
     const saveEdit = async (id) => {
@@ -151,16 +181,34 @@ export default function PurchasesManagement() {
                                         <>
                                             <td>{formatDate(p.timestamp)}</td>
                                             <td>{editStaffName}</td>
-                                            <td>
+                                            <td style={{ position: 'relative' }}>
                                                 <input
                                                     className="edit-input"
                                                     value={editItemName}
-                                                    onChange={e => setEditItemName(e.target.value)}
+                                                    onChange={e => handleItemInputChange(e.target.value)}
+                                                    onFocus={() => setShowItemDropdown(true)}
+                                                    onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)}
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter') saveEdit(p.id);
                                                         if (e.key === 'Escape') cancelEdit();
                                                     }}
+                                                    placeholder="Search items..."
+                                                    autoComplete="off"
                                                 />
+                                                {showItemDropdown && getFilteredItems().length > 0 && (
+                                                    <div className="item-dropdown">
+                                                        {getFilteredItems().slice(0, 8).map(item => (
+                                                            <div
+                                                                key={item.id}
+                                                                className="item-dropdown-option"
+                                                                onMouseDown={() => handleSelectItem(item.name)}
+                                                            >
+                                                                <span className="item-name">{item.name}</span>
+                                                                <span className="item-price">£{item.price.toFixed(2)}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="col-quantity">
                                                 <input
