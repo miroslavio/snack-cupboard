@@ -19,9 +19,9 @@ router.get('/', async (req, res) => {
         }
 
         if (search) {
-            conditions.push('(forename LIKE ? OR surname LIKE ? OR initials LIKE ? OR staffId LIKE ?)');
+            conditions.push('(forename LIKE ? OR surname LIKE ? OR initials LIKE ?)');
             const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+            params.push(searchTerm, searchTerm, searchTerm);
         }
 
         if (conditions.length > 0) {
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Import staff from CSV (upsert based on staffId)
+// Import staff from CSV (upsert based on initials)
 // Supports two modes via query param ?mode=replace (default) or ?mode=append
 // Replace mode: archives staff not in the CSV; Append mode: leaves existing staff unchanged
 router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
@@ -51,52 +51,50 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
 
         // Parse header
         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const staffIdIdx = headers.indexOf('staffid');
         const initialsIdx = headers.indexOf('initials');
         const surnameIdx = headers.indexOf('surname');
         const forenameIdx = headers.indexOf('forename');
 
-        if (staffIdIdx === -1 || initialsIdx === -1 || surnameIdx === -1 || forenameIdx === -1) {
-            return res.status(400).json({ error: 'CSV must have columns: StaffID, Initials, Surname, Forename' });
+        if (initialsIdx === -1 || surnameIdx === -1 || forenameIdx === -1) {
+            return res.status(400).json({ error: 'CSV must have columns: Initials, Surname, Forename' });
         }
 
-        // Get current active staff IDs (for replace mode)
+        // Get current active staff initials (for replace mode)
         const currentStaff = mode === 'replace'
-            ? await allAsync('SELECT staffId FROM staff WHERE archived_at IS NULL')
+            ? await allAsync('SELECT initials FROM staff WHERE archived_at IS NULL')
             : [];
-        const currentStaffIds = new Set(currentStaff.map(s => s.staffId));
+        const currentInitials = new Set(currentStaff.map(s => s.initials));
 
         // Process staff (upsert: update if exists, insert if new)
         let imported = 0;
         let updated = 0;
-        const importedStaffIds = new Set();
+        const importedInitials = new Set();
 
         for (let i = 1; i < lines.length; i++) {
             const parts = lines[i].split(',').map(p => p.trim());
-            if (parts.length > Math.max(staffIdIdx, initialsIdx, surnameIdx, forenameIdx)) {
+            if (parts.length > Math.max(initialsIdx, surnameIdx, forenameIdx)) {
                 try {
-                    const staffId = parts[staffIdIdx];
                     const initials = parts[initialsIdx];
                     const surname = parts[surnameIdx];
                     const forename = parts[forenameIdx];
 
-                    importedStaffIds.add(staffId);
+                    importedInitials.add(initials);
 
                     // Check if staff exists
-                    const existing = await getAsync('SELECT id FROM staff WHERE staffId = ?', [staffId]);
+                    const existing = await getAsync('SELECT id FROM staff WHERE initials = ?', [initials]);
 
                     if (existing) {
                         // Update existing staff and unarchive if archived
                         await runAsync(
-                            'UPDATE staff SET initials = ?, surname = ?, forename = ?, archived_at = NULL WHERE staffId = ?',
-                            [initials, surname, forename, staffId]
+                            'UPDATE staff SET surname = ?, forename = ?, archived_at = NULL WHERE initials = ?',
+                            [surname, forename, initials]
                         );
                         updated++;
                     } else {
                         // Insert new staff
                         await runAsync(
-                            'INSERT INTO staff (staffId, initials, surname, forename) VALUES (?, ?, ?, ?)',
-                            [staffId, initials, surname, forename]
+                            'INSERT INTO staff (initials, surname, forename) VALUES (?, ?, ?)',
+                            [initials, surname, forename]
                         );
                         imported++;
                     }
@@ -110,14 +108,14 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
         // In replace mode, archive staff not in the import
         let archived = 0;
         if (mode === 'replace') {
-            const missingStaffIds = [...currentStaffIds].filter(id => !importedStaffIds.has(id));
-            if (missingStaffIds.length > 0) {
-                const placeholders = missingStaffIds.map(() => '?').join(',');
+            const missingInitials = [...currentInitials].filter(id => !importedInitials.has(id));
+            if (missingInitials.length > 0) {
+                const placeholders = missingInitials.map(() => '?').join(',');
                 await runAsync(
-                    `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE staffId IN (${placeholders}) AND archived_at IS NULL`,
-                    missingStaffIds
+                    `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE initials IN (${placeholders}) AND archived_at IS NULL`,
+                    missingInitials
                 );
-                archived = missingStaffIds.length;
+                archived = missingInitials.length;
             }
         }
 
@@ -134,56 +132,56 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
 // Create single staff member
 router.post('/', express.json(), async (req, res) => {
     try {
-        const { staffId, initials, surname, forename } = req.body;
-        if (!staffId || !initials || !surname || !forename) {
-            return res.status(400).json({ error: 'staffId, initials, surname and forename are required' });
+        const { initials, surname, forename } = req.body;
+        if (!initials || !surname || !forename) {
+            return res.status(400).json({ error: 'initials, surname and forename are required' });
         }
 
-        // Check for archived staff with same staffId
+        // Check for archived staff with same initials
         const archived = await getAsync(
-            'SELECT id FROM staff WHERE staffId = ? AND archived_at IS NOT NULL',
-            [staffId]
+            'SELECT id FROM staff WHERE initials = ? AND archived_at IS NOT NULL',
+            [initials]
         );
 
         if (archived) {
             // Restore and update the archived staff member
             await runAsync(
-                'UPDATE staff SET archived_at = NULL, initials = ?, surname = ?, forename = ? WHERE staffId = ?',
-                [initials, surname, forename, staffId]
+                'UPDATE staff SET archived_at = NULL, surname = ?, forename = ? WHERE initials = ?',
+                [surname, forename, initials]
             );
             return res.json({ message: 'Staff member restored and updated' });
         }
 
-        // Check for active staff with same staffId
+        // Check for active staff with same initials
         const existing = await getAsync(
-            'SELECT id FROM staff WHERE staffId = ? AND archived_at IS NULL',
-            [staffId]
+            'SELECT id FROM staff WHERE initials = ? AND archived_at IS NULL',
+            [initials]
         );
 
         if (existing) {
-            return res.status(400).json({ error: 'StaffID already exists' });
+            return res.status(400).json({ error: 'Initials already exist' });
         }
 
         await runAsync(
-            'INSERT INTO staff (staffId, initials, surname, forename) VALUES (?, ?, ?, ?)',
-            [staffId, initials, surname, forename]
+            'INSERT INTO staff (initials, surname, forename) VALUES (?, ?, ?)',
+            [initials, surname, forename]
         );
 
         res.json({ message: 'Staff member added' });
     } catch (err) {
         console.error(err);
         if (err.message && err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'StaffID already exists' });
+            return res.status(400).json({ error: 'Initials already exist' });
         }
         res.status(500).json({ error: err.message });
     }
 });
 
-// Archive a staff member by staffId (soft delete)
-router.delete('/:staffId', async (req, res) => {
+// Archive a staff member by initials (soft delete)
+router.delete('/:initials', async (req, res) => {
     try {
-        const { staffId } = req.params;
-        await runAsync('UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE staffId = ?', [staffId]);
+        const { initials } = req.params;
+        await runAsync('UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE initials = ?', [initials]);
         res.json({ message: 'Staff member archived' });
     } catch (err) {
         console.error(err);
@@ -192,10 +190,10 @@ router.delete('/:staffId', async (req, res) => {
 });
 
 // Restore archived staff member
-router.put('/:staffId/restore', async (req, res) => {
+router.put('/:initials/restore', async (req, res) => {
     try {
-        const { staffId } = req.params;
-        await runAsync('UPDATE staff SET archived_at = NULL WHERE staffId = ?', [staffId]);
+        const { initials } = req.params;
+        await runAsync('UPDATE staff SET archived_at = NULL WHERE initials = ?', [initials]);
         res.json({ message: 'Staff member restored' });
     } catch (err) {
         console.error(err);
@@ -205,12 +203,12 @@ router.put('/:staffId/restore', async (req, res) => {
 
 // Hard delete staff member (permanently remove from database)
 // Can only delete archived staff to prevent accidental deletion
-router.delete('/:staffId/permanent', async (req, res) => {
+router.delete('/:initials/permanent', async (req, res) => {
     try {
-        const { staffId } = req.params;
+        const { initials } = req.params;
 
         // Check if staff is archived
-        const staff = await getAsync('SELECT archived_at FROM staff WHERE staffId = ?', [staffId]);
+        const staff = await getAsync('SELECT archived_at FROM staff WHERE initials = ?', [initials]);
         if (!staff) {
             return res.status(404).json({ error: 'Staff member not found' });
         }
@@ -218,8 +216,8 @@ router.delete('/:staffId/permanent', async (req, res) => {
             return res.status(400).json({ error: 'Can only permanently delete archived staff. Archive first.' });
         }
 
-        // Delete the staff member (purchases will remain with staffId reference)
-        await runAsync('DELETE FROM staff WHERE staffId = ?', [staffId]);
+        // Delete the staff member (purchases will remain with initials reference)
+        await runAsync('DELETE FROM staff WHERE initials = ?', [initials]);
         res.json({ message: 'Staff member permanently deleted' });
     } catch (err) {
         console.error(err);
@@ -227,18 +225,18 @@ router.delete('/:staffId/permanent', async (req, res) => {
     }
 });
 
-// Update a staff member (initials, forename, surname) by staffId
-router.put('/:staffId', express.json(), async (req, res) => {
+// Update a staff member (forename, surname) by initials
+router.put('/:initials', express.json(), async (req, res) => {
     try {
-        const { staffId } = req.params;
-        const { initials, forename, surname } = req.body;
-        if (!initials || !forename || !surname) {
-            return res.status(400).json({ error: 'initials, forename and surname are required' });
+        const { initials } = req.params;
+        const { forename, surname } = req.body;
+        if (!forename || !surname) {
+            return res.status(400).json({ error: 'forename and surname are required' });
         }
 
         await runAsync(
-            'UPDATE staff SET initials = ?, forename = ?, surname = ? WHERE staffId = ?',
-            [initials, forename, surname, staffId]
+            'UPDATE staff SET forename = ?, surname = ? WHERE initials = ?',
+            [forename, surname, initials]
         );
 
         res.json({ message: 'Staff member updated' });
@@ -251,18 +249,18 @@ router.put('/:staffId', express.json(), async (req, res) => {
 // Bulk archive staff members
 router.post('/bulk/archive', express.json(), async (req, res) => {
     try {
-        const { staffIds } = req.body;
-        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
-            return res.status(400).json({ error: 'staffIds array is required' });
+        const { staffInitials } = req.body;
+        if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
+            return res.status(400).json({ error: 'staffInitials array is required' });
         }
 
-        const placeholders = staffIds.map(() => '?').join(',');
+        const placeholders = staffInitials.map(() => '?').join(',');
         await runAsync(
-            `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE staffId IN (${placeholders}) AND archived_at IS NULL`,
-            staffIds
+            `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE initials IN (${placeholders}) AND archived_at IS NULL`,
+            staffInitials
         );
 
-        res.json({ message: `Archived ${staffIds.length} staff member(s)` });
+        res.json({ message: `Archived ${staffInitials.length} staff member(s)` });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
@@ -272,18 +270,18 @@ router.post('/bulk/archive', express.json(), async (req, res) => {
 // Bulk restore staff members
 router.post('/bulk/restore', express.json(), async (req, res) => {
     try {
-        const { staffIds } = req.body;
-        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
-            return res.status(400).json({ error: 'staffIds array is required' });
+        const { staffInitials } = req.body;
+        if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
+            return res.status(400).json({ error: 'staffInitials array is required' });
         }
 
-        const placeholders = staffIds.map(() => '?').join(',');
+        const placeholders = staffInitials.map(() => '?').join(',');
         await runAsync(
-            `UPDATE staff SET archived_at = NULL WHERE staffId IN (${placeholders})`,
-            staffIds
+            `UPDATE staff SET archived_at = NULL WHERE initials IN (${placeholders})`,
+            staffInitials
         );
 
-        res.json({ message: `Restored ${staffIds.length} staff member(s)` });
+        res.json({ message: `Restored ${staffInitials.length} staff member(s)` });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
@@ -293,31 +291,31 @@ router.post('/bulk/restore', express.json(), async (req, res) => {
 // Bulk hard delete staff members (only archived)
 router.post('/bulk/delete-permanent', express.json(), async (req, res) => {
     try {
-        const { staffIds } = req.body;
-        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
-            return res.status(400).json({ error: 'staffIds array is required' });
+        const { staffInitials } = req.body;
+        if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
+            return res.status(400).json({ error: 'staffInitials array is required' });
         }
 
         // Verify all are archived
-        const placeholders = staffIds.map(() => '?').join(',');
+        const placeholders = staffInitials.map(() => '?').join(',');
         const staff = await allAsync(
-            `SELECT staffId, archived_at FROM staff WHERE staffId IN (${placeholders})`,
-            staffIds
+            `SELECT initials, archived_at FROM staff WHERE initials IN (${placeholders})`,
+            staffInitials
         );
 
         const notArchived = staff.filter(s => !s.archived_at);
         if (notArchived.length > 0) {
             return res.status(400).json({
-                error: `Cannot permanently delete active staff. Archive first: ${notArchived.map(s => s.staffId).join(', ')}`
+                error: `Cannot permanently delete active staff. Archive first: ${notArchived.map(s => s.initials).join(', ')}`
             });
         }
 
         await runAsync(
-            `DELETE FROM staff WHERE staffId IN (${placeholders})`,
-            staffIds
+            `DELETE FROM staff WHERE initials IN (${placeholders})`,
+            staffInitials
         );
 
-        res.json({ message: `Permanently deleted ${staffIds.length} staff member(s)` });
+        res.json({ message: `Permanently deleted ${staffInitials.length} staff member(s)` });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

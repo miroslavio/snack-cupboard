@@ -13,12 +13,11 @@ const db = new sqlite3.Database(DB_PATH);
 export function initializeDatabase() {
     return new Promise((resolve, reject) => {
         db.serialize(() => {
-            // Staff table
+            // Staff table - using initials as the unique identifier
             db.run(`
         CREATE TABLE IF NOT EXISTS staff (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          staffId TEXT UNIQUE NOT NULL,
-          initials TEXT NOT NULL,
+          initials TEXT UNIQUE NOT NULL,
           surname TEXT NOT NULL,
           forename TEXT NOT NULL,
           archived_at DATETIME DEFAULT NULL
@@ -59,7 +58,7 @@ export function initializeDatabase() {
             db.run(`
         CREATE TABLE IF NOT EXISTS purchases (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          staffId TEXT NOT NULL,
+          staffInitials TEXT NOT NULL,
           itemId INTEGER NOT NULL,
           quantity INTEGER NOT NULL,
           price REAL NOT NULL,
@@ -67,7 +66,7 @@ export function initializeDatabase() {
           term TEXT NOT NULL,
           academic_year TEXT NOT NULL,
           timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY(staffId) REFERENCES staff(staffId),
+          FOREIGN KEY(staffInitials) REFERENCES staff(initials),
           FOREIGN KEY(itemId) REFERENCES items(id)
         )
       `);
@@ -76,6 +75,66 @@ export function initializeDatabase() {
             db.run(`ALTER TABLE staff ADD COLUMN archived_at DATETIME DEFAULT NULL`, (err) => {
                 if (err && !err.message.includes('duplicate column')) {
                     console.error('Error adding archived_at to staff:', err.message);
+                }
+            });
+
+            // MIGRATION: Check if old staffId column exists and migrate if needed
+            db.all(`PRAGMA table_info(staff)`, [], (err, columns) => {
+                if (err) {
+                    console.error('Error checking staff table structure:', err);
+                    return;
+                }
+                
+                const hasStaffId = columns.some(col => col.name === 'staffId');
+                const hasStaffInitials = columns.some(col => col.name === 'initials');
+                
+                if (hasStaffId && hasStaffInitials) {
+                    console.log('Migrating staff table from staffId to initials as primary identifier...');
+                    
+                    // Check if purchases table needs migration
+                    db.all(`PRAGMA table_info(purchases)`, [], (err, purchaseCols) => {
+                        if (err) {
+                            console.error('Error checking purchases table:', err);
+                            return;
+                        }
+                        
+                        const hasOldStaffId = purchaseCols.some(col => col.name === 'staffId');
+                        const hasNewStaffInitials = purchaseCols.some(col => col.name === 'staffInitials');
+                        
+                        if (hasOldStaffId && !hasNewStaffInitials) {
+                            // Add new staffInitials column to purchases
+                            db.run(`ALTER TABLE purchases ADD COLUMN staffInitials TEXT`, (err) => {
+                                if (err && !err.message.includes('duplicate column')) {
+                                    console.error('Error adding staffInitials to purchases:', err);
+                                    return;
+                                }
+                                
+                                // Migrate data: copy initials from staff table to purchases
+                                db.run(`
+                                    UPDATE purchases 
+                                    SET staffInitials = (
+                                        SELECT staff.initials 
+                                        FROM staff 
+                                        WHERE staff.staffId = purchases.staffId
+                                    )
+                                    WHERE staffInitials IS NULL
+                                `, (err) => {
+                                    if (err) {
+                                        console.error('Error migrating purchase data:', err);
+                                        return;
+                                    }
+                                    console.log('Successfully migrated purchases to use staff initials');
+                                    
+                                    // Note: We keep the old staffId column in purchases for now for safety
+                                    // It can be manually dropped later if needed
+                                });
+                            });
+                        }
+                    });
+                    
+                    // Note: We keep the old staffId column in staff for now for safety
+                    // It can be manually dropped later if needed
+                    console.log('Migration check complete. Old staffId columns retained for safety.');
                 }
             });
 

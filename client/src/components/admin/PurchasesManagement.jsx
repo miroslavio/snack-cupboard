@@ -316,14 +316,14 @@ export default function PurchasesManagement() {
             {selectedPurchaseIds.size > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#fff3cd', border: '2px solid #ff9800', borderRadius: '8px', marginTop: '0.75rem' }}>
                     <span style={{ fontWeight: '600', color: '#333' }}>{selectedPurchaseIds.size} selected</span>
-                    <button 
-                        onClick={() => setBulkDeleteConfirmOpen(true)} 
+                    <button
+                        onClick={() => setBulkDeleteConfirmOpen(true)}
                         className="delete-btn table-button"
                     >
                         Delete ({selectedPurchaseIds.size})
                     </button>
-                    <button 
-                        onClick={() => setSelectedPurchaseIds(new Set())} 
+                    <button
+                        onClick={() => setSelectedPurchaseIds(new Set())}
                         className="table-button"
                         style={{ marginLeft: 'auto' }}
                     >

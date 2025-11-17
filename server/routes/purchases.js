@@ -10,9 +10,9 @@ console.log('Purchases routes module loaded');
 // Record a purchase
 router.post('/', async (req, res) => {
     try {
-        const { staffId, items } = req.body;
-        if (!staffId || !items || items.length === 0) {
-            return res.status(400).json({ error: 'staffId and items are required' });
+        const { staffInitials, items } = req.body;
+        if (!staffInitials || !items || items.length === 0) {
+            return res.status(400).json({ error: 'staffInitials and items are required' });
         }
 
         // Get current term and academic year from settings
@@ -24,8 +24,8 @@ router.post('/', async (req, res) => {
 
         for (const item of items) {
             await runAsync(
-                'INSERT INTO purchases (staffId, itemId, quantity, price, item_name, term, academic_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [staffId, item.id, item.quantity, item.price, item.name, currentTerm, currentYear]
+                'INSERT INTO purchases (staffInitials, itemId, quantity, price, item_name, term, academic_year) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [staffInitials, item.id, item.quantity, item.price, item.name, currentTerm, currentYear]
             );
         }
 
@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
         const purchases = await allAsync(`
       SELECT 
         p.id,
-        p.staffId,
+        p.staffInitials,
         s.forename,
         s.surname,
         s.initials,
@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
         p.academic_year,
         p.timestamp
       FROM purchases p
-      JOIN staff s ON p.staffId = s.staffId
+      LEFT JOIN staff s ON p.staffInitials = s.initials
       LEFT JOIN items i ON p.itemId = i.id
       ORDER BY p.timestamp DESC
     `);
@@ -70,9 +70,9 @@ router.get('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { staffId, itemName, quantity, totalPrice } = req.body;
+        const { staffInitials, itemName, quantity, totalPrice } = req.body;
 
-        if (!staffId || !itemName || !quantity || !totalPrice) {
+        if (!staffInitials || !itemName || !quantity || !totalPrice) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -90,8 +90,8 @@ router.put('/:id', async (req, res) => {
         const price = totalPrice / quantity; // Calculate unit price
 
         await runAsync(
-            'UPDATE purchases SET staffId = ?, itemId = ?, quantity = ?, price = ?, item_name = ? WHERE id = ?',
-            [staffId, itemId, quantity, price, storedItemName, id]
+            'UPDATE purchases SET staffInitials = ?, itemId = ?, quantity = ?, price = ?, item_name = ? WHERE id = ?',
+            [staffInitials, itemId, quantity, price, storedItemName, id]
         );
 
         res.json({ message: 'Purchase updated successfully' });
@@ -180,7 +180,7 @@ router.get('/export/csv', async (req, res) => {
         let query = `
       SELECT 
         p.id,
-        p.staffId,
+        p.staffInitials,
         s.forename,
         s.surname,
         s.initials,
@@ -191,7 +191,7 @@ router.get('/export/csv', async (req, res) => {
         p.academic_year,
         p.timestamp
       FROM purchases p
-      JOIN staff s ON p.staffId = s.staffId
+      LEFT JOIN staff s ON p.staffInitials = s.initials
       LEFT JOIN items i ON p.itemId = i.id
         `;
 
@@ -220,7 +220,7 @@ router.get('/export/csv', async (req, res) => {
             return res.status(400).json({ error: 'No purchases to export' });
         }
 
-        const fields = ['id', 'staffId', 'forename', 'surname', 'initials', 'itemName', 'quantity', 'price', 'term', 'academic_year', 'timestamp'];
+        const fields = ['id', 'staffInitials', 'forename', 'surname', 'initials', 'itemName', 'quantity', 'price', 'term', 'academic_year', 'timestamp'];
         const parser = new Parser({ fields });
         const csv = parser.parse(purchases);
 
@@ -242,16 +242,15 @@ router.get('/summary/by-staff', async (req, res) => {
     try {
         const summary = await allAsync(`
       SELECT 
-        s.staffId,
+        s.initials,
         s.forename,
         s.surname,
-        s.initials,
         COUNT(p.id) as itemCount,
         ROUND(SUM(p.price * p.quantity), 2) as totalSpent,
         GROUP_CONCAT(DISTINCT DATE(p.timestamp)) as purchaseDates
       FROM staff s
-      LEFT JOIN purchases p ON s.staffId = p.staffId
-      GROUP BY s.staffId, s.forename, s.surname, s.initials
+      LEFT JOIN purchases p ON s.initials = p.staffInitials
+      GROUP BY s.initials, s.forename, s.surname
       ORDER BY s.surname ASC, s.forename ASC
     `);
 
