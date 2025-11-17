@@ -21,12 +21,21 @@ export default function ItemsManagement() {
     const [editCategory, setEditCategory] = useState('Food');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImportForm, setShowImportForm] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
+    const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
+    const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
 
     useEffect(() => { fetchItems(); }, []);
 
+    useEffect(() => {
+        fetchItems();
+    }, [showArchived]);
+
     const fetchItems = async () => {
         try {
-            const res = await axios.get('/api/items');
+            const res = await axios.get('/api/items', {
+                params: { includeArchived: showArchived }
+            });
             setItems(res.data);
         } catch (err) {
             console.error(err);
@@ -76,6 +85,36 @@ export default function ItemsManagement() {
             setMessage('Error deleting item: ' + (err.response?.data?.error ?? err.message));
             setConfirmOpen(false);
             setConfirmTarget(null);
+        }
+    };
+
+    const handleRestore = async (id, name) => {
+        try {
+            const res = await axios.put(`/api/items/${id}/restore`);
+            setMessage(res.data.message || `Restored ${name}`);
+            fetchItems();
+        } catch (err) {
+            setMessage('Error restoring item: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleHardDeleteRequest = (item) => {
+        setHardDeleteTarget(item);
+        setHardDeleteConfirmOpen(true);
+    };
+
+    const handleHardDelete = async () => {
+        if (!hardDeleteTarget) return setHardDeleteConfirmOpen(false);
+        try {
+            const res = await axios.delete(`/api/items/${hardDeleteTarget.id}/permanent`);
+            setMessage(res.data.message || 'Permanently deleted');
+            setHardDeleteConfirmOpen(false);
+            setHardDeleteTarget(null);
+            fetchItems();
+        } catch (err) {
+            setMessage('Error permanently deleting item: ' + (err.response?.data?.error ?? err.message));
+            setHardDeleteConfirmOpen(false);
+            setHardDeleteTarget(null);
         }
     };
 
@@ -151,6 +190,18 @@ export default function ItemsManagement() {
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#666' }}>
+                    <input
+                        type="checkbox"
+                        checked={showArchived}
+                        onChange={e => setShowArchived(e.target.checked)}
+                        style={{ cursor: 'pointer' }}
+                    />
+                    <span>Show archived items</span>
+                </label>
+            </div>
+
             <div className="items-list">
                 <table>
                     <thead>
@@ -162,40 +213,52 @@ export default function ItemsManagement() {
                         </tr>
                     </thead>
                     <tbody>
-                        {items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase())).map(it => (
-                            <tr key={it.id}>
-                                {editingId === it.id ? (
-                                    <>
-                                        <td>
-                                            <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                        </td>
-                                        <td>
-                                            <select className="edit-input" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-                                                <option value="Food">Food</option>
-                                                <option value="Drink">Drink</option>
-                                            </select>
-                                        </td>
-                                        <td className="col-price">
-                                            <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                        </td>
-                                        <td className="col-actions">
-                                            <button onClick={() => saveEdit(it.id)} className="table-button">Save</button>
-                                            <button onClick={cancelEdit} className="table-button">Cancel</button>
-                                        </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td className="item-main">{it.name}</td>
-                                        <td>{it.category || 'Food'}</td>
-                                        <td className="col-price">£{it.price.toFixed(2)}</td>
-                                        <td className="col-actions">
-                                            <button onClick={() => startEdit(it)} className="table-button">Edit</button>
-                                            <button onClick={() => handleDeleteRequest(it)} className="delete-btn table-button">Delete</button>
-                                        </td>
-                                    </>
-                                )}
-                            </tr>
-                        ))}
+                        {items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase())).map(it => {
+                            const isArchived = it.archived_at !== null;
+                            return (
+                                <tr key={it.id} className={isArchived ? 'archived-row' : ''}>
+                                    {editingId === it.id && !isArchived ? (
+                                        <>
+                                            <td>
+                                                <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                            </td>
+                                            <td>
+                                                <select className="edit-input" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                                                    <option value="Food">Food</option>
+                                                    <option value="Drink">Drink</option>
+                                                </select>
+                                            </td>
+                                            <td className="col-price">
+                                                <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                            </td>
+                                            <td className="col-actions">
+                                                <button onClick={() => saveEdit(it.id)} className="table-button">Save</button>
+                                                <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td className="item-main">{it.name}</td>
+                                            <td>{it.category || 'Food'}</td>
+                                            <td className="col-price">£{it.price.toFixed(2)}</td>
+                                            <td className="col-actions">
+                                                {isArchived ? (
+                                                    <>
+                                                        <button onClick={() => handleRestore(it.id, it.name)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
+                                                        <button onClick={() => handleHardDeleteRequest(it)} className="delete-btn table-button">Delete Forever</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => startEdit(it)} className="table-button">Edit</button>
+                                                        <button onClick={() => handleDeleteRequest(it)} className="delete-btn table-button">Delete</button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -257,6 +320,14 @@ export default function ItemsManagement() {
                 message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.name}?` : 'Are you sure?'}
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
+            />
+
+            <ConfirmModal
+                open={hardDeleteConfirmOpen}
+                title="⚠️ Permanently Delete Item"
+                message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.name} from the database. Purchase records will remain but will no longer link to an item. This action CANNOT be undone.` : 'Are you sure?'}
+                onConfirm={handleHardDelete}
+                onCancel={() => { setHardDeleteConfirmOpen(false); setHardDeleteTarget(null); }}
             />
         </div>
     );

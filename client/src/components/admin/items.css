@@ -109,3 +109,18 @@
 .items-management .item-row>div>button:hover {
     opacity: 0.95;
 }
+
+/* Archived items styling */
+.items-management .archived-row {
+    opacity: 0.6;
+}
+
+.items-management .archived-row td {
+    background: #f9f9f9;
+    color: #999;
+}
+
+.items-management .archived-row .item-main {
+    font-weight: 400;
+    text-decoration: line-through;
+}

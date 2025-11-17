@@ -21,14 +21,25 @@ export default function StaffManagement() {
     const [editSurname, setEditSurname] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImportForm, setShowImportForm] = useState(false);
+    const [importMode, setImportMode] = useState('replace'); // 'replace' or 'append'
+    const [showArchived, setShowArchived] = useState(false);
 
     useEffect(() => {
         fetchStaff();
     }, []);
 
+    useEffect(() => {
+        fetchStaff(search);
+    }, [showArchived]);
+
     const fetchStaff = async (q = '') => {
         try {
-            const res = await axios.get('/api/staff', { params: { search: q } });
+            const res = await axios.get('/api/staff', {
+                params: {
+                    search: q,
+                    includeArchived: showArchived
+                }
+            });
             setStaffList(res.data);
         } catch (err) {
             console.error(err);
@@ -38,12 +49,13 @@ export default function StaffManagement() {
 
     const handleImport = async () => {
         try {
-            const response = await axios.post('/api/staff/import', csvText, {
+            const response = await axios.post(`/api/staff/import?mode=${importMode}`, csvText, {
                 headers: { 'Content-Type': 'text/csv' }
             });
             setMessage(response.data.message);
             setCsvText('');
             setShowImportForm(false);
+            setImportMode('replace');
             fetchStaff();
         } catch (err) {
             setMessage('Error importing staff: ' + (err.response?.data?.error ?? err.message));
@@ -56,9 +68,10 @@ export default function StaffManagement() {
         reader.onload = async (e) => {
             const text = e.target.result;
             try {
-                const res = await axios.post('/api/staff/import', text, { headers: { 'Content-Type': 'text/csv' } });
+                const res = await axios.post(`/api/staff/import?mode=${importMode}`, text, { headers: { 'Content-Type': 'text/csv' } });
                 setMessage(res.data.message);
                 setShowImportForm(false);
+                setImportMode('replace');
                 fetchStaff();
             } catch (err) {
                 setMessage('Error importing staff file: ' + (err.response?.data?.error ?? err.message));
@@ -99,10 +112,43 @@ export default function StaffManagement() {
 
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmTarget, setConfirmTarget] = useState(null);
+    const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
+    const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
 
     const handleDeleteRequest = (staffId, displayName) => {
         setConfirmTarget({ staffId, displayName });
         setConfirmOpen(true);
+    };
+
+    const handleRestore = async (staffId, displayName) => {
+        try {
+            const res = await axios.put(`/api/staff/${encodeURIComponent(staffId)}/restore`);
+            setMessage(res.data.message || `Restored ${displayName}`);
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error restoring staff: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleHardDeleteRequest = (staffId, displayName) => {
+        setHardDeleteTarget({ staffId, displayName });
+        setHardDeleteConfirmOpen(true);
+    };
+
+    const handleHardDelete = async () => {
+        if (!hardDeleteTarget) return setHardDeleteConfirmOpen(false);
+        const staffId = hardDeleteTarget.staffId;
+        try {
+            const res = await axios.delete(`/api/staff/${encodeURIComponent(staffId)}/permanent`);
+            setMessage(res.data.message || 'Permanently deleted');
+            setHardDeleteConfirmOpen(false);
+            setHardDeleteTarget(null);
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error permanently deleting staff: ' + (err.response?.data?.error ?? err.message));
+            setHardDeleteConfirmOpen(false);
+            setHardDeleteTarget(null);
+        }
     };
 
     const handleDelete = async () => {
@@ -169,6 +215,18 @@ export default function StaffManagement() {
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#666' }}>
+                    <input
+                        type="checkbox"
+                        checked={showArchived}
+                        onChange={e => setShowArchived(e.target.checked)}
+                        style={{ cursor: 'pointer' }}
+                    />
+                    <span>Show archived staff</span>
+                </label>
+            </div>
+
             <div className="staff-list">
                 <table>
                     <thead>
@@ -184,39 +242,51 @@ export default function StaffManagement() {
                         {filtered.length === 0 ? (
                             <tr><td colSpan={5} className="no-results">No staff found</td></tr>
                         ) : (
-                            filtered.map(s => (
-                                <tr key={s.staffId}>
-                                    {editingId === s.staffId ? (
-                                        <>
-                                            <td>
-                                                <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                            </td>
-                                            <td>
-                                                <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                            </td>
-                                            <td>
-                                                <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
-                                            </td>
-                                            <td className="col-staffid">{s.staffId}</td>
-                                            <td className="col-actions">
-                                                <button onClick={() => saveEdit(s.staffId)} className="table-button">Save</button>
-                                                <button onClick={cancelEdit} className="table-button">Cancel</button>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td className="staff-main">{s.forename}</td>
-                                            <td className="staff-main">{s.surname}</td>
-                                            <td className="staff-main">{s.initials}</td>
-                                            <td className="col-staffid">{s.staffId}</td>
-                                            <td className="col-actions">
-                                                <button onClick={() => startEdit(s)} className="table-button">Edit</button>
-                                                <button className="delete-btn table-button" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)}>Delete</button>
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            ))
+                            filtered.map(s => {
+                                const isArchived = s.archived_at !== null;
+                                return (
+                                    <tr key={s.staffId} className={isArchived ? 'archived-row' : ''}>
+                                        {editingId === s.staffId && !isArchived ? (
+                                            <>
+                                                <td>
+                                                    <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                </td>
+                                                <td>
+                                                    <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                </td>
+                                                <td>
+                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                </td>
+                                                <td className="col-staffid">{s.staffId}</td>
+                                                <td className="col-actions">
+                                                    <button onClick={() => saveEdit(s.staffId)} className="table-button">Save</button>
+                                                    <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td className="staff-main">{s.forename}</td>
+                                                <td className="staff-main">{s.surname}</td>
+                                                <td className="staff-main">{s.initials}</td>
+                                                <td className="col-staffid">{s.staffId}</td>
+                                                <td className="col-actions">
+                                                    {isArchived ? (
+                                                        <>
+                                                            <button onClick={() => handleRestore(s.staffId, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
+                                                            <button onClick={() => handleHardDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete Forever</button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => startEdit(s)} className="table-button">Edit</button>
+                                                            <button className="delete-btn table-button" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)}>Delete</button>
+                                                        </>
+                                                    )}
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                );
+                            })
                         )}
                     </tbody>
                 </table>
@@ -224,7 +294,7 @@ export default function StaffManagement() {
 
             {message && <div className="message">{message}</div>}
 
-            <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setShowImportForm(false); }}>
+            <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setImportMode('replace'); setShowImportForm(false); }}>
                 <div style={{ marginBottom: '1rem' }}>
                     <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: StaffID,Initials,Surname,Forename</p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
@@ -236,10 +306,26 @@ export default function StaffManagement() {
                         placeholder={`StaffID,Initials,Surname,Forename\n001,AB,Smith,Alan\n002,CD,Jones,Carol`}
                         style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
                     />
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing staff members</p>
+                    <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={importMode === 'append'}
+                                onChange={e => setImportMode(e.target.checked ? 'append' : 'replace')}
+                                style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontWeight: '500' }}>Append mode</span>
+                            <span style={{ color: '#666', fontSize: '0.85rem' }}>(keep existing staff, add new ones only)</span>
+                        </label>
+                    </div>
+                    {importMode === 'replace' && (
+                        <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.85rem', color: '#856404', background: '#fff3cd', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ffc107' }}>
+                            ⚠️ Replace mode: staff not in the CSV will be archived
+                        </p>
+                    )}
                 </div>
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setCsvText(''); setShowImportForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setCsvText(''); setImportMode('replace'); setShowImportForm(false); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleImport}>Import</button>
                 </div>
             </FormModal>
@@ -280,6 +366,14 @@ export default function StaffManagement() {
                 message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.displayName} (${confirmTarget.staffId})? This cannot be undone.` : 'Are you sure?'}
                 onConfirm={handleDelete}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
+            />
+
+            <ConfirmModal
+                open={hardDeleteConfirmOpen}
+                title="⚠️ Permanently Delete Staff Member"
+                message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.displayName} (${hardDeleteTarget.staffId}) from the database. Their purchase records will remain but will no longer link to a staff profile. This action CANNOT be undone.` : 'Are you sure?'}
+                onConfirm={handleHardDelete}
+                onCancel={() => { setHardDeleteConfirmOpen(false); setHardDeleteTarget(null); }}
             />
         </div>
     );

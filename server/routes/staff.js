@@ -39,8 +39,11 @@ router.get('/', async (req, res) => {
 });
 
 // Import staff from CSV (upsert based on staffId)
+// Supports two modes via query param ?mode=replace (default) or ?mode=append
+// Replace mode: archives staff not in the CSV; Append mode: leaves existing staff unchanged
 router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
     try {
+        const mode = req.query.mode || 'replace'; // default to replace
         const lines = req.body.split('\n').filter(line => line.trim());
         if (lines.length < 2) {
             return res.status(400).json({ error: 'CSV must have header and at least one data row' });
@@ -57,9 +60,17 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
             return res.status(400).json({ error: 'CSV must have columns: StaffID, Initials, Surname, Forename' });
         }
 
+        // Get current active staff IDs (for replace mode)
+        const currentStaff = mode === 'replace'
+            ? await allAsync('SELECT staffId FROM staff WHERE archived_at IS NULL')
+            : [];
+        const currentStaffIds = new Set(currentStaff.map(s => s.staffId));
+
         // Process staff (upsert: update if exists, insert if new)
         let imported = 0;
         let updated = 0;
+        const importedStaffIds = new Set();
+
         for (let i = 1; i < lines.length; i++) {
             const parts = lines[i].split(',').map(p => p.trim());
             if (parts.length > Math.max(staffIdIdx, initialsIdx, surnameIdx, forenameIdx)) {
@@ -68,6 +79,8 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
                     const initials = parts[initialsIdx];
                     const surname = parts[surnameIdx];
                     const forename = parts[forenameIdx];
+
+                    importedStaffIds.add(staffId);
 
                     // Check if staff exists
                     const existing = await getAsync('SELECT id FROM staff WHERE staffId = ?', [staffId]);
@@ -94,7 +107,24 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
             }
         }
 
-        res.json({ message: `Imported ${imported} new staff members, updated ${updated} existing records` });
+        // In replace mode, archive staff not in the import
+        let archived = 0;
+        if (mode === 'replace') {
+            const missingStaffIds = [...currentStaffIds].filter(id => !importedStaffIds.has(id));
+            if (missingStaffIds.length > 0) {
+                const placeholders = missingStaffIds.map(() => '?').join(',');
+                await runAsync(
+                    `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE staffId IN (${placeholders}) AND archived_at IS NULL`,
+                    missingStaffIds
+                );
+                archived = missingStaffIds.length;
+            }
+        }
+
+        const parts = [`Imported ${imported} new`, `updated ${updated} existing`];
+        if (archived > 0) parts.push(`archived ${archived} removed from list`);
+
+        res.json({ message: parts.join(', ') + ' staff member(s)' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
@@ -167,6 +197,30 @@ router.put('/:staffId/restore', async (req, res) => {
         const { staffId } = req.params;
         await runAsync('UPDATE staff SET archived_at = NULL WHERE staffId = ?', [staffId]);
         res.json({ message: 'Staff member restored' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Hard delete staff member (permanently remove from database)
+// Can only delete archived staff to prevent accidental deletion
+router.delete('/:staffId/permanent', async (req, res) => {
+    try {
+        const { staffId } = req.params;
+
+        // Check if staff is archived
+        const staff = await getAsync('SELECT archived_at FROM staff WHERE staffId = ?', [staffId]);
+        if (!staff) {
+            return res.status(404).json({ error: 'Staff member not found' });
+        }
+        if (!staff.archived_at) {
+            return res.status(400).json({ error: 'Can only permanently delete archived staff. Archive first.' });
+        }
+
+        // Delete the staff member (purchases will remain with staffId reference)
+        await runAsync('DELETE FROM staff WHERE staffId = ?', [staffId]);
+        res.json({ message: 'Staff member permanently deleted' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

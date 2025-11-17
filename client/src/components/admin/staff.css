@@ -72,3 +72,18 @@
     color: #666;
     margin-left: 1rem;
 }
+
+/* Archived staff styling */
+.staff-management .archived-row {
+    opacity: 0.6;
+}
+
+.staff-management .archived-row td {
+    background: #f9f9f9;
+    color: #999;
+}
+
+.staff-management .archived-row .staff-main {
+    font-weight: 400;
+    text-decoration: line-through;
+}

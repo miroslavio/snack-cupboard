@@ -127,11 +127,47 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Archive item (soft delete)
+// Archive an item by id (soft delete)
 router.delete('/:id', async (req, res) => {
     try {
         await runAsync('UPDATE items SET archived_at = CURRENT_TIMESTAMP WHERE id = ?', [req.params.id]);
         res.json({ message: 'Item archived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Restore archived item
+router.put('/:id/restore', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await runAsync('UPDATE items SET archived_at = NULL WHERE id = ?', [id]);
+        res.json({ message: 'Item restored' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Hard delete item (permanently remove from database)
+// Can only delete archived items to prevent accidental deletion
+router.delete('/:id/permanent', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if item is archived
+        const item = await getAsync('SELECT archived_at FROM items WHERE id = ?', [id]);
+        if (!item) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+        if (!item.archived_at) {
+            return res.status(400).json({ error: 'Can only permanently delete archived items. Archive first.' });
+        }
+
+        // Delete the item (purchases will remain with item reference)
+        await runAsync('DELETE FROM items WHERE id = ?', [id]);
+        res.json({ message: 'Item permanently deleted' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
