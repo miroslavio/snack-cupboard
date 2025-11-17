@@ -84,23 +84,23 @@ export function initializeDatabase() {
                     console.error('Error checking staff table structure:', err);
                     return;
                 }
-                
+
                 const hasStaffId = columns.some(col => col.name === 'staffId');
                 const hasStaffInitials = columns.some(col => col.name === 'initials');
-                
+
                 if (hasStaffId && hasStaffInitials) {
                     console.log('Migrating staff table from staffId to initials as primary identifier...');
-                    
+
                     // Check if purchases table needs migration
                     db.all(`PRAGMA table_info(purchases)`, [], (err, purchaseCols) => {
                         if (err) {
                             console.error('Error checking purchases table:', err);
                             return;
                         }
-                        
+
                         const hasOldStaffId = purchaseCols.some(col => col.name === 'staffId');
                         const hasNewStaffInitials = purchaseCols.some(col => col.name === 'staffInitials');
-                        
+
                         if (hasOldStaffId && !hasNewStaffInitials) {
                             // Add new staffInitials column to purchases
                             db.run(`ALTER TABLE purchases ADD COLUMN staffInitials TEXT`, (err) => {
@@ -108,7 +108,7 @@ export function initializeDatabase() {
                                     console.error('Error adding staffInitials to purchases:', err);
                                     return;
                                 }
-                                
+
                                 // Migrate data: copy initials from staff table to purchases
                                 db.run(`
                                     UPDATE purchases 
@@ -124,14 +124,14 @@ export function initializeDatabase() {
                                         return;
                                     }
                                     console.log('Successfully migrated purchases to use staff initials');
-                                    
+
                                     // Note: We keep the old staffId column in purchases for now for safety
                                     // It can be manually dropped later if needed
                                 });
                             });
                         }
                     });
-                    
+
                     // Note: We keep the old staffId column in staff for now for safety
                     // It can be manually dropped later if needed
                     console.log('Migration check complete. Old staffId columns retained for safety.');

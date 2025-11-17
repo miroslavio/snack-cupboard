@@ -92,15 +92,15 @@ The server will serve the built client from `client/dist` on <http://localhost:3
 
 Navigate to Admin Panel → Manage Staff → Import
 
-**CSV Format**: `StaffID,Initials,Surname,Forename`
+**CSV Format**: `Initials,Surname,Forename`
 
 Example:
 
 ```csv
-StaffID,Initials,Surname,Forename
-001,JS,Smith,John
-002,AB,Brown,Alice
-003,CD,Davis,Carol
+Initials,Surname,Forename
+JS,Smith,John
+AB,Brown,Alice
+CD,Davis,Carol
 ```
 
 ### Importing Items
@@ -126,8 +126,13 @@ Coffee,1.20,Drink
 - `GET /api/staff?search=` — List all staff (with optional search)
 - `POST /api/staff` — Create single staff member
 - `POST /api/staff/import` — Bulk import from CSV
-- `PUT /api/staff/:staffId` — Update staff member
-- `DELETE /api/staff/:staffId` — Delete staff member
+- `PUT /api/staff/:initials` — Update staff member
+- `DELETE /api/staff/:initials` — Archive staff member
+- `PUT /api/staff/:initials/restore` — Restore archived staff member
+- `DELETE /api/staff/:initials/permanent` — Permanently delete staff member
+- `POST /api/staff/bulk/archive` — Archive multiple staff members
+- `POST /api/staff/bulk/restore` — Restore multiple staff members
+- `POST /api/staff/bulk/delete-permanent` — Permanently delete multiple staff members
 
 ### Items
 
@@ -140,12 +145,13 @@ Coffee,1.20,Drink
 
 ### Purchases
 
-- `POST /api/purchases` — Record purchase `{ staffId, items: [{ id, quantity, price }] }`
+- `POST /api/purchases` — Record purchase `{ staffInitials, items: [{ id, quantity, price }] }`
 - `GET /api/purchases` — List all purchases
 - `GET /api/purchases/export/csv` — Export purchases as CSV
 - `GET /api/purchases/summary/by-staff` — Get spending summary by staff
 - `PUT /api/purchases/:id` — Update purchase
 - `DELETE /api/purchases/:id` — Delete purchase
+- `POST /api/purchases/bulk/delete` — Delete multiple purchases
 
 ### Health
 

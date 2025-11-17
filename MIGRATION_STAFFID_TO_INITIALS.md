@@ -7,6 +7,7 @@ This migration changes the primary identifier for staff members from `staffId` t
 ## Completed Changes
 
 ### Backend
+
 - ✅ `server/database.js`: Updated schema to use `initials` as UNIQUE identifier, added migration code for existing databases
 - ✅ `server/routes/staff.js`: Updated all routes to use `initials` parameter instead of `staffId`
   - GET, POST, PUT, DELETE routes
@@ -18,6 +19,7 @@ This migration changes the primary identifier for staff members from `staffId` t
   - Summary by staff
 
 ### Database Migration
+
 - Schema updated for new installations
 - Migration code handles existing databases:
   - Adds `staffInitials` column to purchases table
@@ -29,7 +31,9 @@ This migration changes the primary identifier for staff members from `staffId` t
 ### Frontend Components
 
 #### 1. StaffManagement.jsx
+
 Replace all instances:
+
 - `newStaffId` → `newInitials` (remove staff ID input field entirely)
 - `staffId` → `initials` in API calls
 - `selectedStaffIds` → `selectedInitials`
@@ -39,17 +43,23 @@ Replace all instances:
 - Update table column headers and display
 
 #### 2. UserSelection.jsx  
+
 Replace:
+
 - `staffId` → `initials` when passing to checkout
 - Update any display or selection logic
 
 #### 3. PurchasesManagement.jsx
+
 Replace:
+
 - `staffId` → `staffInitials` in state and API calls
 - Update purchase records display
 
 #### 4. README.md
+
 Update CSV format examples:
+
 - Staff CSV: Remove StaffID column, show: `Initials,Surname,Forename`
 
 ## Testing Checklist
@@ -67,6 +77,7 @@ Update CSV format examples:
 ## Rollback Plan
 
 If issues occur:
+
 1. Backend routes still work with old data (migration preserves staffId columns)
 2. Can revert backend routes to use staffId again
 3. Frontend can be reverted independently

@@ -80,7 +80,7 @@ function App() {
         setCheckoutError('');
         try {
             await axios.post('/api/purchases', {
-                staffId: selectedStaff.staffId,
+                staffInitials: selectedStaff.initials,
                 items: basket
             });
             setCheckoutLoading(false);

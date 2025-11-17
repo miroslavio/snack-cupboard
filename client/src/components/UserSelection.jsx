@@ -36,8 +36,7 @@ export default function UserSelection({ onSelectStaff }) {
             setFilteredStaff(
                 staff.filter(s =>
                     `${s.forename} ${s.surname}`.toLowerCase().includes(lowercaseSearch) ||
-                    s.initials.toLowerCase().includes(lowercaseSearch) ||
-                    s.staffId.includes(value)
+                    s.initials.toLowerCase().includes(lowercaseSearch)
                 )
             );
         }

@@ -11,7 +11,7 @@ export default function PurchasesManagement() {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmTarget, setConfirmTarget] = useState(null);
     const [editingId, setEditingId] = useState(null);
-    const [editStaffId, setEditStaffId] = useState('');
+    const [editStaffInitials, setEditStaffInitials] = useState('');
     const [editStaffName, setEditStaffName] = useState('');
     const [editItemName, setEditItemName] = useState('');
     const [editQuantity, setEditQuantity] = useState('');
@@ -69,7 +69,7 @@ export default function PurchasesManagement() {
 
     const startEdit = (p) => {
         setEditingId(p.id);
-        setEditStaffId(p.staffId || '');
+        setEditStaffInitials(p.staffInitials || '');
         setEditStaffName(`${p.forename} ${p.surname}`);
         setEditItemName(p.itemName || '');
         setEditQuantity(p.quantity != null ? String(p.quantity) : '');
@@ -80,7 +80,7 @@ export default function PurchasesManagement() {
 
     const cancelEdit = () => {
         setEditingId(null);
-        setEditStaffId('');
+        setEditStaffInitials('');
         setEditStaffName('');
         setEditItemName('');
         setEditQuantity('');
@@ -108,11 +108,11 @@ export default function PurchasesManagement() {
         try {
             const qty = parseInt(editQuantity);
             const price = parseFloat(editTotalPrice);
-            if (!editStaffId || !editItemName || isNaN(qty) || qty <= 0 || isNaN(price)) {
+            if (!editStaffInitials || !editItemName || isNaN(qty) || qty <= 0 || isNaN(price)) {
                 return setMessage('All fields required with valid quantity and price');
             }
             const res = await axios.put(`/api/purchases/${id}`, {
-                staffId: editStaffId,
+                staffInitials: editStaffInitials,
                 itemName: editItemName,
                 quantity: qty,
                 totalPrice: price
@@ -160,7 +160,7 @@ export default function PurchasesManagement() {
         const termYear = p.term && p.academic_year ? `${p.term} ${p.academic_year}` : '';
         return (
             `${p.forename} ${p.surname}`.toLowerCase().includes(q) ||
-            p.staffId?.toLowerCase().includes(q) ||
+            p.staffInitials?.toLowerCase().includes(q) ||
             p.itemName?.toLowerCase().includes(q) ||
             termYear.toLowerCase().includes(q) ||
             new Date(p.timestamp).toLocaleDateString().includes(q)

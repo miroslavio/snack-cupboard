@@ -11,7 +11,6 @@ export default function StaffManagement() {
     const [staffList, setStaffList] = useState([]);
     const [search, setSearch] = useState('');
 
-    const [newStaffId, setNewStaffId] = useState('');
     const [newInitials, setNewInitials] = useState('');
     const [newForename, setNewForename] = useState('');
     const [newSurname, setNewSurname] = useState('');
@@ -23,7 +22,7 @@ export default function StaffManagement() {
     const [showImportForm, setShowImportForm] = useState(false);
     const [importMode, setImportMode] = useState('replace'); // 'replace' or 'append'
     const [showArchived, setShowArchived] = useState(false);
-    const [selectedStaffIds, setSelectedStaffIds] = useState(new Set());
+    const [selectedInitials, setSelectedInitials] = useState(new Set());
     const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
     const [bulkRestoreConfirmOpen, setBulkRestoreConfirmOpen] = useState(false);
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
@@ -36,21 +35,21 @@ export default function StaffManagement() {
         fetchStaff(search);
     }, [showArchived]);
 
-    const toggleSelectStaff = (staffId) => {
-        const newSelected = new Set(selectedStaffIds);
-        if (newSelected.has(staffId)) {
-            newSelected.delete(staffId);
+    const toggleSelectStaff = (initials) => {
+        const newSelected = new Set(selectedInitials);
+        if (newSelected.has(initials)) {
+            newSelected.delete(initials);
         } else {
-            newSelected.add(staffId);
+            newSelected.add(initials);
         }
-        setSelectedStaffIds(newSelected);
+        setSelectedInitials(newSelected);
     };
 
     const toggleSelectAll = () => {
-        if (selectedStaffIds.size === filtered.length) {
-            setSelectedStaffIds(new Set());
+        if (selectedInitials.size === filtered.length) {
+            setSelectedInitials(new Set());
         } else {
-            setSelectedStaffIds(new Set(filtered.map(s => s.staffId)));
+            setSelectedInitials(new Set(filtered.map(s => s.initials)));
         }
     };
 
@@ -104,15 +103,14 @@ export default function StaffManagement() {
 
     const handleAdd = async () => {
         try {
-            if (!newStaffId || !newInitials || !newForename || !newSurname) return setMessage('All fields required');
+            if (!newInitials || !newForename || !newSurname) return setMessage('All fields required');
             const res = await axios.post('/api/staff', {
-                staffId: newStaffId,
                 initials: newInitials,
                 surname: newSurname,
                 forename: newForename
             });
             setMessage(res.data.message || 'Staff added');
-            setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
+            setNewInitials(''); setNewForename(''); setNewSurname('');
             setShowAddForm(false);
             setMessage('');
             fetchStaff();
@@ -126,7 +124,7 @@ export default function StaffManagement() {
             e.preventDefault();
             handleAdd();
         } else if (e.key === 'Escape') {
-            setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname('');
+            setNewInitials(''); setNewForename(''); setNewSurname('');
             setShowAddForm(false);
             setMessage('');
         }
@@ -137,14 +135,14 @@ export default function StaffManagement() {
     const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
     const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
 
-    const handleArchiveRequest = (staffId, displayName) => {
-        setConfirmTarget({ staffId, displayName });
+    const handleArchiveRequest = (initials, displayName) => {
+        setConfirmTarget({ initials, displayName });
         setConfirmOpen(true);
     };
 
-    const handleRestore = async (staffId, displayName) => {
+    const handleRestore = async (initials, displayName) => {
         try {
-            const res = await axios.put(`/api/staff/${encodeURIComponent(staffId)}/restore`);
+            const res = await axios.put(`/api/staff/${encodeURIComponent(initials)}/restore`);
             setMessage(res.data.message || `Restored ${displayName}`);
             fetchStaff();
         } catch (err) {
@@ -152,16 +150,16 @@ export default function StaffManagement() {
         }
     };
 
-    const handleHardDeleteRequest = (staffId, displayName) => {
-        setHardDeleteTarget({ staffId, displayName });
+    const handleHardDeleteRequest = (initials, displayName) => {
+        setHardDeleteTarget({ initials, displayName });
         setHardDeleteConfirmOpen(true);
     };
 
     const handleHardDelete = async () => {
         if (!hardDeleteTarget) return setHardDeleteConfirmOpen(false);
-        const staffId = hardDeleteTarget.staffId;
+        const initials = hardDeleteTarget.initials;
         try {
-            const res = await axios.delete(`/api/staff/${encodeURIComponent(staffId)}/permanent`);
+            const res = await axios.delete(`/api/staff/${encodeURIComponent(initials)}/permanent`);
             setMessage(res.data.message || 'Permanently deleted');
             setHardDeleteConfirmOpen(false);
             setHardDeleteTarget(null);
@@ -176,11 +174,11 @@ export default function StaffManagement() {
     const handleBulkArchive = async () => {
         setBulkArchiveConfirmOpen(false);
         try {
-            // Only send active staff IDs
-            const activeIds = selectedActive.map(s => s.staffId);
-            const res = await axios.post('/api/staff/bulk/archive', { staffIds: activeIds });
+            // Only send active staff initials
+            const activeInitials = selectedActive.map(s => s.initials);
+            const res = await axios.post('/api/staff/bulk/archive', { staffInitials: activeInitials });
             setMessage(res.data.message);
-            setSelectedStaffIds(new Set());
+            setSelectedInitials(new Set());
             fetchStaff();
         } catch (err) {
             setMessage('Error archiving staff: ' + (err.response?.data?.error ?? err.message));
@@ -190,11 +188,11 @@ export default function StaffManagement() {
     const handleBulkRestore = async () => {
         setBulkRestoreConfirmOpen(false);
         try {
-            // Only send archived staff IDs
-            const archivedIds = selectedArchived.map(s => s.staffId);
-            const res = await axios.post('/api/staff/bulk/restore', { staffIds: archivedIds });
+            // Only send archived staff initials
+            const archivedInitials = selectedArchived.map(s => s.initials);
+            const res = await axios.post('/api/staff/bulk/restore', { staffInitials: archivedInitials });
             setMessage(res.data.message);
-            setSelectedStaffIds(new Set());
+            setSelectedInitials(new Set());
             fetchStaff();
         } catch (err) {
             setMessage('Error restoring staff: ' + (err.response?.data?.error ?? err.message));
@@ -204,11 +202,11 @@ export default function StaffManagement() {
     const handleBulkDelete = async () => {
         setBulkDeleteConfirmOpen(false);
         try {
-            // Only send archived staff IDs
-            const archivedIds = selectedArchived.map(s => s.staffId);
-            const res = await axios.post('/api/staff/bulk/delete-permanent', { staffIds: archivedIds });
+            // Only send archived staff initials
+            const archivedInitials = selectedArchived.map(s => s.initials);
+            const res = await axios.post('/api/staff/bulk/delete-permanent', { staffInitials: archivedInitials });
             setMessage(res.data.message);
-            setSelectedStaffIds(new Set());
+            setSelectedInitials(new Set());
             fetchStaff();
         } catch (err) {
             setMessage('Error permanently deleting staff: ' + (err.response?.data?.error ?? err.message));
@@ -217,9 +215,9 @@ export default function StaffManagement() {
 
     const handleArchive = async () => {
         if (!confirmTarget) return setConfirmOpen(false);
-        const staffId = confirmTarget.staffId;
+        const initials = confirmTarget.initials;
         try {
-            const res = await axios.delete(`/api/staff/${encodeURIComponent(staffId)}`);
+            const res = await axios.delete(`/api/staff/${encodeURIComponent(initials)}`);
             setMessage(res.data.message || 'Archived');
             setConfirmOpen(false);
             setConfirmTarget(null);
@@ -232,7 +230,7 @@ export default function StaffManagement() {
     };
 
     const startEdit = (s) => {
-        setEditingId(s.staffId);
+        setEditingId(s.initials);
         setEditInitials(s.initials || '');
         setEditForename(s.forename || '');
         setEditSurname(s.surname || '');
@@ -246,10 +244,10 @@ export default function StaffManagement() {
         setEditSurname('');
     };
 
-    const saveEdit = async (staffId) => {
+    const saveEdit = async (initials) => {
         try {
             if (!editInitials || !editForename || !editSurname) return setMessage('All fields required');
-            const res = await axios.put(`/api/staff/${encodeURIComponent(staffId)}`, {
+            const res = await axios.put(`/api/staff/${encodeURIComponent(initials)}`, {
                 initials: editInitials,
                 forename: editForename,
                 surname: editSurname
@@ -265,10 +263,10 @@ export default function StaffManagement() {
     const filtered = staffList.filter(s => {
         if (!search) return true;
         const q = search.toLowerCase();
-        return (`${s.forename} ${s.surname}`.toLowerCase().includes(q) || s.initials.toLowerCase().includes(q) || s.staffId.toLowerCase().includes(q));
+        return (`${s.forename} ${s.surname}`.toLowerCase().includes(q) || s.initials.toLowerCase().includes(q));
     });
 
-    const selectedStaff = filtered.filter(s => selectedStaffIds.has(s.staffId));
+    const selectedStaff = filtered.filter(s => selectedInitials.has(s.initials));
     const selectedActive = selectedStaff.filter(s => !s.archived_at);
     const selectedArchived = selectedStaff.filter(s => s.archived_at);
 
@@ -302,7 +300,7 @@ export default function StaffManagement() {
                             <th style={{ width: '40px', textAlign: 'center' }}>
                                 <input
                                     type="checkbox"
-                                    checked={filtered.length > 0 && selectedStaffIds.size === filtered.length}
+                                    checked={filtered.length > 0 && selectedInitials.size === filtered.length}
                                     onChange={toggleSelectAll}
                                     style={{ cursor: 'pointer' }}
                                 />
@@ -310,40 +308,38 @@ export default function StaffManagement() {
                             <th>Forename</th>
                             <th>Surname</th>
                             <th>Initials</th>
-                            <th className="col-staffid">Staff ID</th>
                             <th className="col-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filtered.length === 0 ? (
-                            <tr><td colSpan={6} className="no-results">No staff found</td></tr>
+                            <tr><td colSpan={5} className="no-results">No staff found</td></tr>
                         ) : (
                             filtered.map(s => {
                                 const isArchived = s.archived_at !== null;
                                 return (
-                                    <tr key={s.staffId} className={isArchived ? 'archived-row' : ''}>
-                                        {editingId === s.staffId && !isArchived ? (
+                                    <tr key={s.initials} className={isArchived ? 'archived-row' : ''}>
+                                        {editingId === s.initials && !isArchived ? (
                                             <>
                                                 <td style={{ textAlign: 'center' }}>
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedStaffIds.has(s.staffId)}
-                                                        onChange={() => toggleSelectStaff(s.staffId)}
+                                                        checked={selectedInitials.has(s.initials)}
+                                                        onChange={() => toggleSelectStaff(s.initials)}
                                                         style={{ cursor: 'pointer' }}
                                                     />
                                                 </td>
                                                 <td>
-                                                    <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
                                                 <td>
-                                                    <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
                                                 <td>
-                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
-                                                <td className="col-staffid">{s.staffId}</td>
                                                 <td className="col-actions">
-                                                    <button onClick={() => saveEdit(s.staffId)} className="table-button">Save</button>
+                                                    <button onClick={() => saveEdit(s.initials)} className="table-button">Save</button>
                                                     <button onClick={cancelEdit} className="table-button">Cancel</button>
                                                 </td>
                                             </>
@@ -352,25 +348,24 @@ export default function StaffManagement() {
                                                 <td style={{ textAlign: 'center' }}>
                                                     <input
                                                         type="checkbox"
-                                                        checked={selectedStaffIds.has(s.staffId)}
-                                                        onChange={() => toggleSelectStaff(s.staffId)}
+                                                        checked={selectedInitials.has(s.initials)}
+                                                        onChange={() => toggleSelectStaff(s.initials)}
                                                         style={{ cursor: 'pointer' }}
                                                     />
                                                 </td>
                                                 <td className="staff-main">{s.forename}</td>
                                                 <td className="staff-main">{s.surname}</td>
                                                 <td className="staff-main">{s.initials}</td>
-                                                <td className="col-staffid">{s.staffId}</td>
                                                 <td className="col-actions">
                                                     {isArchived ? (
                                                         <>
-                                                            <button onClick={() => handleRestore(s.staffId, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
-                                                            <button onClick={() => handleHardDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete</button>
+                                                            <button onClick={() => handleRestore(s.initials, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
+                                                            <button onClick={() => handleHardDeleteRequest(s.initials, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete</button>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <button onClick={() => startEdit(s)} className="table-button">Edit</button>
-                                                            <button className="table-button" style={{ background: '#ff9800', color: 'white' }} onClick={() => handleArchiveRequest(s.staffId, `${s.forename} ${s.surname}`)}>Archive</button>
+                                                            <button className="table-button" style={{ background: '#ff9800', color: 'white' }} onClick={() => handleArchiveRequest(s.initials, `${s.forename} ${s.surname}`)}>Archive</button>
                                                         </>
                                                     )}
                                                 </td>
@@ -384,9 +379,9 @@ export default function StaffManagement() {
                 </table>
             </div>
 
-            {selectedStaffIds.size > 0 && (
+            {selectedInitials.size > 0 && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f0f4ff', border: '2px solid #667eea', borderRadius: '8px', marginTop: '0.75rem' }}>
-                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedStaffIds.size} selected</span>
+                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedInitials.size} selected</span>
                     {selectedActive.length > 0 && (
                         <button
                             onClick={() => setBulkArchiveConfirmOpen(true)}
@@ -414,7 +409,7 @@ export default function StaffManagement() {
                         </>
                     )}
                     <button
-                        onClick={() => setSelectedStaffIds(new Set())}
+                        onClick={() => setSelectedInitials(new Set())}
                         className="table-button"
                         style={{ marginLeft: 'auto' }}
                     >
@@ -427,14 +422,14 @@ export default function StaffManagement() {
 
             <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setImportMode('replace'); setShowImportForm(false); }}>
                 <div style={{ marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: StaffID,Initials,Surname,Forename</p>
+                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: Initials,Surname,Forename</p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
                     <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
                     <textarea
                         rows={8}
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
-                        placeholder={`StaffID,Initials,Surname,Forename\n001,AB,Smith,Alan\n002,CD,Jones,Carol`}
+                        placeholder={`Initials,Surname,Forename\nAB,Smith,Alan\nCD,Jones,Carol`}
                         style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
                     />
                     <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
@@ -461,15 +456,11 @@ export default function StaffManagement() {
                 </div>
             </FormModal>
 
-            <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>
+            <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="staff-id" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Staff ID</label>
-                        <input id="staff-id" placeholder="StaffID" value={newStaffId} onChange={e => setNewStaffId(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
-                    </div>
-                    <div style={{ marginBottom: '12px' }}>
                         <label htmlFor="staff-initials" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Initials</label>
-                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     <div style={{ marginBottom: '12px' }}>
                         <label htmlFor="staff-forename" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Forename</label>
@@ -480,16 +471,19 @@ export default function StaffManagement() {
                         <input id="staff-surname" placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                 </div>
-                {message && showAddForm && (
-                    <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
-                        {message}
-                    </div>
-                )}
-                <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>Cancel</button>
-                    <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
-                </div>
-            </FormModal>
+        </div>
+                {
+        message && showAddForm && (
+            <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
+                {message}
+            </div>
+        )
+    }
+    <div className="form-modal-actions">
+        <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>Cancel</button>
+        <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
+    </div>
+            </FormModal >
 
             <ConfirmModal
                 open={confirmOpen}
@@ -503,7 +497,7 @@ export default function StaffManagement() {
             <ConfirmModal
                 open={hardDeleteConfirmOpen}
                 title="⚠️ Permanently Delete Staff Member"
-                message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.displayName} (${hardDeleteTarget.staffId}) from the database. Their purchase records will remain but will no longer link to a staff profile. This action CANNOT be undone.` : 'Are you sure?'}
+                message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.displayName} (${hardDeleteTarget.initials}) from the database. Their purchase records will remain but will no longer link to a staff profile. This action CANNOT be undone.` : 'Are you sure?'}
                 onConfirm={handleHardDelete}
                 onCancel={() => { setHardDeleteConfirmOpen(false); setHardDeleteTarget(null); }}
             />
@@ -533,6 +527,6 @@ export default function StaffManagement() {
                 onConfirm={handleBulkDelete}
                 onCancel={() => setBulkDeleteConfirmOpen(false)}
             />
-        </div>
+        </div >
     );
 }
