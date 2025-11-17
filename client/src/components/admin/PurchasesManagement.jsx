@@ -18,6 +18,8 @@ export default function PurchasesManagement() {
     const [editTotalPrice, setEditTotalPrice] = useState('');
     const [items, setItems] = useState([]);
     const [showItemDropdown, setShowItemDropdown] = useState(false);
+    const [selectedPurchaseIds, setSelectedPurchaseIds] = useState(new Set());
+    const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
     useEffect(() => {
         fetchPurchases();
@@ -123,6 +125,36 @@ export default function PurchasesManagement() {
         }
     };
 
+    const toggleSelectPurchase = (purchaseId) => {
+        const newSet = new Set(selectedPurchaseIds);
+        if (newSet.has(purchaseId)) {
+            newSet.delete(purchaseId);
+        } else {
+            newSet.add(purchaseId);
+        }
+        setSelectedPurchaseIds(newSet);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedPurchaseIds.size === filtered.length) {
+            setSelectedPurchaseIds(new Set());
+        } else {
+            setSelectedPurchaseIds(new Set(filtered.map(p => p.id)));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        setBulkDeleteConfirmOpen(false);
+        try {
+            const res = await axios.post('/api/purchases/bulk/delete', { purchaseIds: Array.from(selectedPurchaseIds) });
+            setMessage(res.data.message);
+            setSelectedPurchaseIds(new Set());
+            fetchPurchases();
+        } catch (err) {
+            setMessage('Error deleting purchases: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
     const filtered = purchases.filter(p => {
         const q = search.toLowerCase();
         const termYear = p.term && p.academic_year ? `${p.term} ${p.academic_year}` : '';
@@ -164,6 +196,14 @@ export default function PurchasesManagement() {
                 <table>
                     <thead>
                         <tr>
+                            <th style={{ width: '40px', textAlign: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={filtered.length > 0 && selectedPurchaseIds.size === filtered.length}
+                                    onChange={toggleSelectAll}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                            </th>
                             <th>Date & Time</th>
                             <th>Staff Name</th>
                             <th>Item</th>
@@ -175,12 +215,13 @@ export default function PurchasesManagement() {
                     </thead>
                     <tbody>
                         {filtered.length === 0 ? (
-                            <tr><td colSpan={7} className="no-results">No purchases found</td></tr>
+                            <tr><td colSpan={8} className="no-results">No purchases found</td></tr>
                         ) : (
                             filtered.map(p => (
                                 <tr key={p.id}>
                                     {editingId === p.id ? (
                                         <>
+                                            <td style={{ textAlign: 'center' }}></td>
                                             <td>{formatDate(p.timestamp)}</td>
                                             <td>{editStaffName}</td>
                                             <td style={{ position: 'relative' }}>
@@ -245,6 +286,14 @@ export default function PurchasesManagement() {
                                         </>
                                     ) : (
                                         <>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPurchaseIds.has(p.id)}
+                                                    onChange={() => toggleSelectPurchase(p.id)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                            </td>
                                             <td>{formatDate(p.timestamp)}</td>
                                             <td>{p.forename} {p.surname}</td>
                                             <td>{p.itemName}</td>
@@ -264,14 +313,41 @@ export default function PurchasesManagement() {
                 </table>
             </div>
 
+            {selectedPurchaseIds.size > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#fff3cd', border: '2px solid #ff9800', borderRadius: '8px', marginTop: '0.75rem' }}>
+                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedPurchaseIds.size} selected</span>
+                    <button 
+                        onClick={() => setBulkDeleteConfirmOpen(true)} 
+                        className="delete-btn table-button"
+                    >
+                        Delete ({selectedPurchaseIds.size})
+                    </button>
+                    <button 
+                        onClick={() => setSelectedPurchaseIds(new Set())} 
+                        className="table-button"
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        Clear Selection
+                    </button>
+                </div>
+            )}
+
             {message && <div className="message">{message}</div>}
 
             <ConfirmModal
                 open={confirmOpen}
-                title="Delete purchase"
-                message={confirmTarget ? `Are you sure you want to delete this purchase (${confirmTarget.itemName} - ${confirmTarget.forename} ${confirmTarget.surname})?` : 'Are you sure?'}
+                title="⚠️ Delete Purchase"
+                message={confirmTarget ? `Are you sure you want to permanently delete this purchase (${confirmTarget.itemName} - ${confirmTarget.forename} ${confirmTarget.surname})? This action CANNOT be undone.` : 'Are you sure?'}
                 onConfirm={handleDelete}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
+            />
+
+            <ConfirmModal
+                open={bulkDeleteConfirmOpen}
+                title="⚠️ Permanently Delete Multiple Purchases"
+                message={`This will PERMANENTLY delete ${selectedPurchaseIds.size} purchase record(s) from the database. Purchase data will be lost and cannot be recovered. This action CANNOT be undone. Are you absolutely sure?`}
+                onConfirm={handleBulkDelete}
+                onCancel={() => setBulkDeleteConfirmOpen(false)}
             />
         </div>
     );

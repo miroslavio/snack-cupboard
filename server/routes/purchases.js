@@ -139,6 +139,27 @@ router.delete('/bulk-delete', async (req, res) => {
     }
 });
 
+// Bulk delete selected purchases by IDs
+router.post('/bulk/delete', async (req, res) => {
+    try {
+        const { purchaseIds } = req.body;
+        if (!Array.isArray(purchaseIds) || purchaseIds.length === 0) {
+            return res.status(400).json({ error: 'purchaseIds array required' });
+        }
+
+        const placeholders = purchaseIds.map(() => '?').join(',');
+        await runAsync(
+            `DELETE FROM purchases WHERE id IN (${placeholders})`,
+            purchaseIds
+        );
+
+        res.json({ message: `Permanently deleted ${purchaseIds.length} purchase(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete a purchase
 router.delete('/:id', async (req, res) => {
     try {
