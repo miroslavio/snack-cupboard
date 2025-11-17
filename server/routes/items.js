@@ -236,4 +236,79 @@ router.post('/import-csv', express.text({ type: 'text/csv' }), async (req, res) 
     }
 });
 
+// Bulk archive items
+router.post('/bulk/archive', async (req, res) => {
+    try {
+        const { itemIds } = req.body;
+        if (!Array.isArray(itemIds) || itemIds.length === 0) {
+            return res.status(400).json({ error: 'itemIds array required' });
+        }
+
+        const placeholders = itemIds.map(() => '?').join(',');
+        await runAsync(
+            `UPDATE items SET archived_at = CURRENT_TIMESTAMP WHERE id IN (${placeholders}) AND archived_at IS NULL`,
+            itemIds
+        );
+
+        res.json({ message: `Archived ${itemIds.length} item(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Bulk restore items
+router.post('/bulk/restore', async (req, res) => {
+    try {
+        const { itemIds } = req.body;
+        if (!Array.isArray(itemIds) || itemIds.length === 0) {
+            return res.status(400).json({ error: 'itemIds array required' });
+        }
+
+        const placeholders = itemIds.map(() => '?').join(',');
+        await runAsync(
+            `UPDATE items SET archived_at = NULL WHERE id IN (${placeholders})`,
+            itemIds
+        );
+
+        res.json({ message: `Restored ${itemIds.length} item(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Bulk permanent delete items
+router.post('/bulk/delete-permanent', async (req, res) => {
+    try {
+        const { itemIds } = req.body;
+        if (!Array.isArray(itemIds) || itemIds.length === 0) {
+            return res.status(400).json({ error: 'itemIds array required' });
+        }
+
+        // Verify all items are archived
+        const placeholders = itemIds.map(() => '?').join(',');
+        const activeItems = await allAsync(
+            `SELECT id FROM items WHERE id IN (${placeholders}) AND archived_at IS NULL`,
+            itemIds
+        );
+
+        if (activeItems.length > 0) {
+            const activeIds = activeItems.map(i => i.id).join(', ');
+            return res.status(400).json({ error: `Cannot permanently delete active items. Archive first: ${activeIds}` });
+        }
+
+        // Delete items
+        await runAsync(
+            `DELETE FROM items WHERE id IN (${placeholders})`,
+            itemIds
+        );
+
+        res.json({ message: `Permanently deleted ${itemIds.length} item(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;

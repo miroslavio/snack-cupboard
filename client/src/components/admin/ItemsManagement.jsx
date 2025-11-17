@@ -24,6 +24,10 @@ export default function ItemsManagement() {
     const [showArchived, setShowArchived] = useState(false);
     const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
     const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
+    const [selectedItemIds, setSelectedItemIds] = useState(new Set());
+    const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
+    const [bulkRestoreConfirmOpen, setBulkRestoreConfirmOpen] = useState(false);
+    const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
     useEffect(() => { fetchItems(); }, []);
 
@@ -118,6 +122,64 @@ export default function ItemsManagement() {
         }
     };
 
+    const toggleSelectItem = (itemId) => {
+        const newSet = new Set(selectedItemIds);
+        if (newSet.has(itemId)) {
+            newSet.delete(itemId);
+        } else {
+            newSet.add(itemId);
+        }
+        setSelectedItemIds(newSet);
+    };
+
+    const toggleSelectAll = () => {
+        const filtered = items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase()));
+        if (selectedItemIds.size === filtered.length) {
+            setSelectedItemIds(new Set());
+        } else {
+            setSelectedItemIds(new Set(filtered.map(it => it.id)));
+        }
+    };
+
+    const handleBulkArchive = async () => {
+        setBulkArchiveConfirmOpen(false);
+        try {
+            const activeIds = selectedActive.map(it => it.id);
+            const res = await axios.post('/api/items/bulk/archive', { itemIds: activeIds });
+            setMessage(res.data.message);
+            setSelectedItemIds(new Set());
+            fetchItems();
+        } catch (err) {
+            setMessage('Error archiving items: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleBulkRestore = async () => {
+        setBulkRestoreConfirmOpen(false);
+        try {
+            const archivedIds = selectedArchived.map(it => it.id);
+            const res = await axios.post('/api/items/bulk/restore', { itemIds: archivedIds });
+            setMessage(res.data.message);
+            setSelectedItemIds(new Set());
+            fetchItems();
+        } catch (err) {
+            setMessage('Error restoring items: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        setBulkDeleteConfirmOpen(false);
+        try {
+            const archivedIds = selectedArchived.map(it => it.id);
+            const res = await axios.post('/api/items/bulk/delete-permanent', { itemIds: archivedIds });
+            setMessage(res.data.message);
+            setSelectedItemIds(new Set());
+            fetchItems();
+        } catch (err) {
+            setMessage('Error permanently deleting items: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
     const startEdit = (item) => {
         setEditingId(item.id);
         setEditName(item.name || '');
@@ -179,6 +241,11 @@ export default function ItemsManagement() {
         }
     };
 
+    const filteredItems = items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase()));
+    const selectedItems = filteredItems.filter(it => selectedItemIds.has(it.id));
+    const selectedActive = selectedItems.filter(it => !it.archived_at);
+    const selectedArchived = selectedItems.filter(it => it.archived_at);
+
     return (
         <div className="items-management">
             <div className="search-bar-container">
@@ -206,6 +273,14 @@ export default function ItemsManagement() {
                 <table>
                     <thead>
                         <tr>
+                            <th style={{ width: '40px', textAlign: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={filteredItems.length > 0 && selectedItemIds.size === filteredItems.length}
+                                    onChange={toggleSelectAll}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                            </th>
                             <th>Name</th>
                             <th>Category</th>
                             <th className="col-price">Price</th>
@@ -213,12 +288,13 @@ export default function ItemsManagement() {
                         </tr>
                     </thead>
                     <tbody>
-                        {items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase())).map(it => {
+                        {filteredItems.map(it => {
                             const isArchived = it.archived_at !== null;
                             return (
                                 <tr key={it.id} className={isArchived ? 'archived-row' : ''}>
                                     {editingId === it.id && !isArchived ? (
                                         <>
+                                            <td style={{ textAlign: 'center' }}></td>
                                             <td>
                                                 <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
                                             </td>
@@ -238,6 +314,14 @@ export default function ItemsManagement() {
                                         </>
                                     ) : (
                                         <>
+                                            <td style={{ textAlign: 'center' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedItemIds.has(it.id)}
+                                                    onChange={() => toggleSelectItem(it.id)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                            </td>
                                             <td className="item-main">{it.name}</td>
                                             <td>{it.category || 'Food'}</td>
                                             <td className="col-price">£{it.price.toFixed(2)}</td>
@@ -245,12 +329,12 @@ export default function ItemsManagement() {
                                                 {isArchived ? (
                                                     <>
                                                         <button onClick={() => handleRestore(it.id, it.name)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
-                                                        <button onClick={() => handleHardDeleteRequest(it)} className="delete-btn table-button">Delete Forever</button>
+                                                        <button onClick={() => handleHardDeleteRequest(it)} className="delete-btn table-button">Delete</button>
                                                     </>
                                                 ) : (
                                                     <>
                                                         <button onClick={() => startEdit(it)} className="table-button">Edit</button>
-                                                        <button onClick={() => handleDeleteRequest(it)} className="delete-btn table-button">Delete</button>
+                                                        <button onClick={() => handleDeleteRequest(it)} className="table-button" style={{ background: '#ff9800', color: 'white' }}>Archive</button>
                                                     </>
                                                 )}
                                             </td>
@@ -262,6 +346,45 @@ export default function ItemsManagement() {
                     </tbody>
                 </table>
             </div>
+
+            {selectedItemIds.size > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f0f4ff', border: '2px solid #667eea', borderRadius: '8px', marginTop: '0.75rem' }}>
+                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedItemIds.size} selected</span>
+                    {selectedActive.length > 0 && (
+                        <button
+                            onClick={() => setBulkArchiveConfirmOpen(true)}
+                            className="table-button"
+                            style={{ background: '#ff9800', color: 'white' }}
+                        >
+                            Archive ({selectedActive.length})
+                        </button>
+                    )}
+                    {selectedArchived.length > 0 && (
+                        <>
+                            <button
+                                onClick={() => setBulkRestoreConfirmOpen(true)}
+                                className="table-button"
+                                style={{ background: '#667eea', color: 'white' }}
+                            >
+                                Restore ({selectedArchived.length})
+                            </button>
+                            <button
+                                onClick={() => setBulkDeleteConfirmOpen(true)}
+                                className="delete-btn table-button"
+                            >
+                                Delete ({selectedArchived.length})
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={() => setSelectedItemIds(new Set())}
+                        className="table-button"
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        Clear Selection
+                    </button>
+                </div>
+            )}
 
             {message && <div className="message">{message}</div>}
 
@@ -316,8 +439,9 @@ export default function ItemsManagement() {
 
             <ConfirmModal
                 open={confirmOpen}
-                title="Delete item"
-                message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.name}?` : 'Are you sure?'}
+                title="Archive item"
+                message={confirmTarget ? `Are you sure you want to archive ${confirmTarget.name}? It will be hidden but can be restored later.` : 'Are you sure?'}
+                confirmText="Archive"
                 onConfirm={handleDeleteConfirm}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
             />
@@ -328,6 +452,32 @@ export default function ItemsManagement() {
                 message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.name} from the database. Purchase records will remain but will no longer link to an item. This action CANNOT be undone.` : 'Are you sure?'}
                 onConfirm={handleHardDelete}
                 onCancel={() => { setHardDeleteConfirmOpen(false); setHardDeleteTarget(null); }}
+            />
+
+            <ConfirmModal
+                open={bulkArchiveConfirmOpen}
+                title="Archive Multiple Items"
+                message={`Archive ${selectedActive.length} item(s)?`}
+                confirmText="Archive"
+                onConfirm={handleBulkArchive}
+                onCancel={() => setBulkArchiveConfirmOpen(false)}
+            />
+
+            <ConfirmModal
+                open={bulkRestoreConfirmOpen}
+                title="Restore Multiple Items"
+                message={`Restore ${selectedArchived.length} archived item(s)?`}
+                confirmText="Restore"
+                onConfirm={handleBulkRestore}
+                onCancel={() => setBulkRestoreConfirmOpen(false)}
+            />
+
+            <ConfirmModal
+                open={bulkDeleteConfirmOpen}
+                title="⚠️ Permanently Delete Multiple Items"
+                message={`This will PERMANENTLY delete ${selectedArchived.length} archived item(s) from the database. This action CANNOT be undone.`}
+                onConfirm={handleBulkDelete}
+                onCancel={() => setBulkDeleteConfirmOpen(false)}
             />
         </div>
     );
