@@ -23,6 +23,10 @@ export default function StaffManagement() {
     const [showImportForm, setShowImportForm] = useState(false);
     const [importMode, setImportMode] = useState('replace'); // 'replace' or 'append'
     const [showArchived, setShowArchived] = useState(false);
+    const [selectedStaffIds, setSelectedStaffIds] = useState(new Set());
+    const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
+    const [bulkRestoreConfirmOpen, setBulkRestoreConfirmOpen] = useState(false);
+    const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
     useEffect(() => {
         fetchStaff();
@@ -31,6 +35,24 @@ export default function StaffManagement() {
     useEffect(() => {
         fetchStaff(search);
     }, [showArchived]);
+
+    const toggleSelectStaff = (staffId) => {
+        const newSelected = new Set(selectedStaffIds);
+        if (newSelected.has(staffId)) {
+            newSelected.delete(staffId);
+        } else {
+            newSelected.add(staffId);
+        }
+        setSelectedStaffIds(newSelected);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedStaffIds.size === filtered.length) {
+            setSelectedStaffIds(new Set());
+        } else {
+            setSelectedStaffIds(new Set(filtered.map(s => s.staffId)));
+        }
+    };
 
     const fetchStaff = async (q = '') => {
         try {
@@ -115,7 +137,7 @@ export default function StaffManagement() {
     const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
     const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
 
-    const handleDeleteRequest = (staffId, displayName) => {
+    const handleArchiveRequest = (staffId, displayName) => {
         setConfirmTarget({ staffId, displayName });
         setConfirmOpen(true);
     };
@@ -151,17 +173,59 @@ export default function StaffManagement() {
         }
     };
 
-    const handleDelete = async () => {
+    const handleBulkArchive = async () => {
+        setBulkArchiveConfirmOpen(false);
+        try {
+            // Only send active staff IDs
+            const activeIds = selectedActive.map(s => s.staffId);
+            const res = await axios.post('/api/staff/bulk/archive', { staffIds: activeIds });
+            setMessage(res.data.message);
+            setSelectedStaffIds(new Set());
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error archiving staff: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleBulkRestore = async () => {
+        setBulkRestoreConfirmOpen(false);
+        try {
+            // Only send archived staff IDs
+            const archivedIds = selectedArchived.map(s => s.staffId);
+            const res = await axios.post('/api/staff/bulk/restore', { staffIds: archivedIds });
+            setMessage(res.data.message);
+            setSelectedStaffIds(new Set());
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error restoring staff: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        setBulkDeleteConfirmOpen(false);
+        try {
+            // Only send archived staff IDs
+            const archivedIds = selectedArchived.map(s => s.staffId);
+            const res = await axios.post('/api/staff/bulk/delete-permanent', { staffIds: archivedIds });
+            setMessage(res.data.message);
+            setSelectedStaffIds(new Set());
+            fetchStaff();
+        } catch (err) {
+            setMessage('Error permanently deleting staff: ' + (err.response?.data?.error ?? err.message));
+        }
+    };
+
+    const handleArchive = async () => {
         if (!confirmTarget) return setConfirmOpen(false);
         const staffId = confirmTarget.staffId;
         try {
             const res = await axios.delete(`/api/staff/${encodeURIComponent(staffId)}`);
-            setMessage(res.data.message || 'Deleted');
+            setMessage(res.data.message || 'Archived');
             setConfirmOpen(false);
             setConfirmTarget(null);
             fetchStaff();
         } catch (err) {
-            setMessage('Error deleting staff: ' + (err.response?.data?.error ?? err.message));
+            setMessage('Error archiving staff: ' + (err.response?.data?.error ?? err.message));
             setConfirmOpen(false);
             setConfirmTarget(null);
         }
@@ -204,6 +268,10 @@ export default function StaffManagement() {
         return (`${s.forename} ${s.surname}`.toLowerCase().includes(q) || s.initials.toLowerCase().includes(q) || s.staffId.toLowerCase().includes(q));
     });
 
+    const selectedStaff = filtered.filter(s => selectedStaffIds.has(s.staffId));
+    const selectedActive = selectedStaff.filter(s => !s.archived_at);
+    const selectedArchived = selectedStaff.filter(s => s.archived_at);
+
     return (
         <div className="staff-management">
             <div className="search-bar-container">
@@ -231,6 +299,14 @@ export default function StaffManagement() {
                 <table>
                     <thead>
                         <tr>
+                            <th style={{ width: '40px', textAlign: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={filtered.length > 0 && selectedStaffIds.size === filtered.length}
+                                    onChange={toggleSelectAll}
+                                    style={{ cursor: 'pointer' }}
+                                />
+                            </th>
                             <th>Forename</th>
                             <th>Surname</th>
                             <th>Initials</th>
@@ -240,7 +316,7 @@ export default function StaffManagement() {
                     </thead>
                     <tbody>
                         {filtered.length === 0 ? (
-                            <tr><td colSpan={5} className="no-results">No staff found</td></tr>
+                            <tr><td colSpan={6} className="no-results">No staff found</td></tr>
                         ) : (
                             filtered.map(s => {
                                 const isArchived = s.archived_at !== null;
@@ -248,6 +324,14 @@ export default function StaffManagement() {
                                     <tr key={s.staffId} className={isArchived ? 'archived-row' : ''}>
                                         {editingId === s.staffId && !isArchived ? (
                                             <>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedStaffIds.has(s.staffId)}
+                                                        onChange={() => toggleSelectStaff(s.staffId)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                </td>
                                                 <td>
                                                     <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.staffId); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
@@ -265,6 +349,14 @@ export default function StaffManagement() {
                                             </>
                                         ) : (
                                             <>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedStaffIds.has(s.staffId)}
+                                                        onChange={() => toggleSelectStaff(s.staffId)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                </td>
                                                 <td className="staff-main">{s.forename}</td>
                                                 <td className="staff-main">{s.surname}</td>
                                                 <td className="staff-main">{s.initials}</td>
@@ -273,12 +365,12 @@ export default function StaffManagement() {
                                                     {isArchived ? (
                                                         <>
                                                             <button onClick={() => handleRestore(s.staffId, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
-                                                            <button onClick={() => handleHardDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete Forever</button>
+                                                            <button onClick={() => handleHardDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete</button>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <button onClick={() => startEdit(s)} className="table-button">Edit</button>
-                                                            <button className="delete-btn table-button" onClick={() => handleDeleteRequest(s.staffId, `${s.forename} ${s.surname}`)}>Delete</button>
+                                                            <button className="table-button" style={{ background: '#ff9800', color: 'white' }} onClick={() => handleArchiveRequest(s.staffId, `${s.forename} ${s.surname}`)}>Archive</button>
                                                         </>
                                                     )}
                                                 </td>
@@ -291,6 +383,45 @@ export default function StaffManagement() {
                     </tbody>
                 </table>
             </div>
+
+            {selectedStaffIds.size > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f0f4ff', border: '2px solid #667eea', borderRadius: '8px', marginTop: '0.75rem' }}>
+                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedStaffIds.size} selected</span>
+                    {selectedActive.length > 0 && (
+                        <button
+                            onClick={() => setBulkArchiveConfirmOpen(true)}
+                            className="table-button"
+                            style={{ background: '#ff9800', color: 'white' }}
+                        >
+                            Archive ({selectedActive.length})
+                        </button>
+                    )}
+                    {selectedArchived.length > 0 && (
+                        <>
+                            <button
+                                onClick={() => setBulkRestoreConfirmOpen(true)}
+                                className="table-button"
+                                style={{ background: '#667eea', color: 'white' }}
+                            >
+                                Restore ({selectedArchived.length})
+                            </button>
+                            <button
+                                onClick={() => setBulkDeleteConfirmOpen(true)}
+                                className="delete-btn table-button"
+                            >
+                                Delete ({selectedArchived.length})
+                            </button>
+                        </>
+                    )}
+                    <button
+                        onClick={() => setSelectedStaffIds(new Set())}
+                        className="table-button"
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        Clear Selection
+                    </button>
+                </div>
+            )}
 
             {message && <div className="message">{message}</div>}
 
@@ -362,9 +493,10 @@ export default function StaffManagement() {
 
             <ConfirmModal
                 open={confirmOpen}
-                title="Delete staff member"
-                message={confirmTarget ? `Are you sure you want to delete ${confirmTarget.displayName} (${confirmTarget.staffId})? This cannot be undone.` : 'Are you sure?'}
-                onConfirm={handleDelete}
+                title="Archive staff member"
+                message={confirmTarget ? `Are you sure you want to archive ${confirmTarget.displayName} (${confirmTarget.staffId})? They will be hidden but can be restored later.` : 'Are you sure?'}
+                confirmText="Archive"
+                onConfirm={handleArchive}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
             />
 
@@ -374,6 +506,32 @@ export default function StaffManagement() {
                 message={hardDeleteTarget ? `This will PERMANENTLY delete ${hardDeleteTarget.displayName} (${hardDeleteTarget.staffId}) from the database. Their purchase records will remain but will no longer link to a staff profile. This action CANNOT be undone.` : 'Are you sure?'}
                 onConfirm={handleHardDelete}
                 onCancel={() => { setHardDeleteConfirmOpen(false); setHardDeleteTarget(null); }}
+            />
+
+            <ConfirmModal
+                open={bulkArchiveConfirmOpen}
+                title="Archive Multiple Staff Members"
+                message={`Archive ${selectedActive.length} staff member(s)?`}
+                confirmText="Archive"
+                onConfirm={handleBulkArchive}
+                onCancel={() => setBulkArchiveConfirmOpen(false)}
+            />
+
+            <ConfirmModal
+                open={bulkRestoreConfirmOpen}
+                title="Restore Multiple Staff Members"
+                message={`Restore ${selectedArchived.length} archived staff member(s)?`}
+                confirmText="Restore"
+                onConfirm={handleBulkRestore}
+                onCancel={() => setBulkRestoreConfirmOpen(false)}
+            />
+
+            <ConfirmModal
+                open={bulkDeleteConfirmOpen}
+                title="⚠️ Permanently Delete Multiple Staff"
+                message={`This will PERMANENTLY delete ${selectedArchived.length} archived staff member(s) from the database. Their purchase records will remain but will no longer link to staff profiles. This action CANNOT be undone.`}
+                onConfirm={handleBulkDelete}
+                onCancel={() => setBulkDeleteConfirmOpen(false)}
             />
         </div>
     );

@@ -248,4 +248,80 @@ router.put('/:staffId', express.json(), async (req, res) => {
     }
 });
 
+// Bulk archive staff members
+router.post('/bulk/archive', express.json(), async (req, res) => {
+    try {
+        const { staffIds } = req.body;
+        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
+            return res.status(400).json({ error: 'staffIds array is required' });
+        }
+
+        const placeholders = staffIds.map(() => '?').join(',');
+        await runAsync(
+            `UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE staffId IN (${placeholders}) AND archived_at IS NULL`,
+            staffIds
+        );
+
+        res.json({ message: `Archived ${staffIds.length} staff member(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Bulk restore staff members
+router.post('/bulk/restore', express.json(), async (req, res) => {
+    try {
+        const { staffIds } = req.body;
+        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
+            return res.status(400).json({ error: 'staffIds array is required' });
+        }
+
+        const placeholders = staffIds.map(() => '?').join(',');
+        await runAsync(
+            `UPDATE staff SET archived_at = NULL WHERE staffId IN (${placeholders})`,
+            staffIds
+        );
+
+        res.json({ message: `Restored ${staffIds.length} staff member(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Bulk hard delete staff members (only archived)
+router.post('/bulk/delete-permanent', express.json(), async (req, res) => {
+    try {
+        const { staffIds } = req.body;
+        if (!staffIds || !Array.isArray(staffIds) || staffIds.length === 0) {
+            return res.status(400).json({ error: 'staffIds array is required' });
+        }
+
+        // Verify all are archived
+        const placeholders = staffIds.map(() => '?').join(',');
+        const staff = await allAsync(
+            `SELECT staffId, archived_at FROM staff WHERE staffId IN (${placeholders})`,
+            staffIds
+        );
+
+        const notArchived = staff.filter(s => !s.archived_at);
+        if (notArchived.length > 0) {
+            return res.status(400).json({
+                error: `Cannot permanently delete active staff. Archive first: ${notArchived.map(s => s.staffId).join(', ')}`
+            });
+        }
+
+        await runAsync(
+            `DELETE FROM staff WHERE staffId IN (${placeholders})`,
+            staffIds
+        );
+
+        res.json({ message: `Permanently deleted ${staffIds.length} staff member(s)` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
