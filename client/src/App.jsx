@@ -7,6 +7,7 @@ import Basket from './components/Basket';
 import AdminPanel from './components/AdminPanel';
 import PasswordModal from './components/PasswordModal';
 import ConfirmCheckoutModal from './components/ConfirmCheckoutModal';
+import StaffPurchaseHistory from './components/StaffPurchaseHistory';
 import { Settings, Home } from 'lucide-react';
 
 
@@ -123,11 +124,21 @@ function App() {
         setCurrentPage('user-selection');
     };
 
+    const handleViewPurchaseHistory = () => {
+        setCurrentPage('purchase-history');
+    };
+
+    const handleBackFromHistory = () => {
+        setCurrentPage('item-selection');
+    };
+
     const handleBack = () => {
         if (currentPage === 'item-selection') {
             setBasket([]);
             setSelectedStaff(null);
             setCurrentPage('user-selection');
+        } else if (currentPage === 'purchase-history') {
+            setCurrentPage('item-selection');
         } else if (currentPage === 'admin') {
             setIsAuthenticated(false);
             setCurrentPage('user-selection');
@@ -142,7 +153,7 @@ function App() {
                 <div className="header-content">
                     <h1 onClick={handleHomeClick} style={{ cursor: 'pointer' }} title="Return to Home">🥨 Snack Cupboard</h1>
                     <div className="header-right">
-                        {currentTerm && currentYear && currentPage !== 'admin' && (
+                        {currentTerm && currentYear && (
                             <span className="header-term-badge">{currentTerm} {currentYear}</span>
                         )}
                         {currentPage === 'admin' ? (
@@ -174,11 +185,21 @@ function App() {
                         <UserSelection onSelectStaff={handleSelectStaff} />
                     )}
 
+                    {currentPage === 'purchase-history' && selectedStaff && (
+                        <StaffPurchaseHistory
+                            staff={selectedStaff}
+                            onBack={handleBackFromHistory}
+                        />
+                    )}
+
                     {currentPage === 'item-selection' && selectedStaff && (
                         <div className="item-selection-container">
                             <div className="selection-header">
                                 <h2>Welcome, {selectedStaff.forename} {selectedStaff.surname}</h2>
-                                <button className="back-btn" onClick={handleBack}>Back</button>
+                                <div className="header-actions">
+                                    <button className="view-history-btn" onClick={handleViewPurchaseHistory}>My Purchases</button>
+                                    <button className="back-btn" onClick={handleBack}>Back</button>
+                                </div>
                             </div>
                             <div className="item-basket-layout">
                                 <ItemSelection onAddToBasket={handleAddToBasket} />

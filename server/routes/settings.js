@@ -127,4 +127,46 @@ router.delete('/term', async (req, res) => {
     }
 });
 
+// Add a new term to the terms table without activating it
+router.post('/term', async (req, res) => {
+    try {
+        const { term, academic_year } = req.body;
+
+        if (!term || !academic_year) {
+            return res.status(400).json({ error: 'Term and academic year are required' });
+        }
+
+        // Validate term
+        const validTerms = ['Michaelmas', 'Hilary', 'Trinity'];
+        if (!validTerms.includes(term)) {
+            return res.status(400).json({ error: 'Invalid term. Must be Michaelmas, Hilary, or Trinity' });
+        }
+
+        // Check if term already exists
+        const existing = await getAsync(
+            'SELECT * FROM terms WHERE term = ? AND academic_year = ?',
+            [term, academic_year]
+        );
+
+        if (existing) {
+            return res.status(400).json({ error: 'This term already exists' });
+        }
+
+        // Add to terms table only (don't update settings)
+        await runAsync(
+            'INSERT INTO terms (term, academic_year) VALUES (?, ?)',
+            [term, academic_year]
+        );
+
+        res.json({
+            message: `${term} ${academic_year} added successfully`,
+            term,
+            academic_year
+        });
+    } catch (error) {
+        console.error('Error adding term:', error);
+        res.status(500).json({ error: 'Failed to add term' });
+    }
+});
+
 export default router;

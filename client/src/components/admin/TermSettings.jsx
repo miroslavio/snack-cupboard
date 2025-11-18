@@ -135,9 +135,9 @@ function TermSettings({ onTermChange }) {
         setMessage('');
 
         try {
-            // Just add the term to the terms table without setting it as active
-            const response = await fetch('http://localhost:3001/api/settings/current', {
-                method: 'PUT',
+            // Add the term to the terms table without setting it as active
+            const response = await fetch('http://localhost:3001/api/settings/term', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     term: newTerm,
@@ -145,7 +145,10 @@ function TermSettings({ onTermChange }) {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to add term');
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to add term');
+            }
 
             setMessage(`${newTerm} ${newYear} has been added. Click "Set Active" to use it for new purchases.`);
             setTimeout(() => setMessage(''), 4000);
@@ -154,7 +157,7 @@ function TermSettings({ onTermChange }) {
             setShowAddModal(false);
             await fetchAllTerms();
         } catch (err) {
-            setError('Failed to add term');
+            setError(err.message || 'Failed to add term');
             console.error(err);
         } finally {
             setAddingTerm(false);
@@ -164,8 +167,14 @@ function TermSettings({ onTermChange }) {
     const handleDeleteRequest = (term, year, purchaseCount) => {
         setDeleteTarget({ term, year, purchaseCount });
         setShowDeleteWarning(true);
-        setDeleteCountdown(5);
-        setCanConfirmDelete(false);
+        // Only use countdown if there are purchases (data loss risk)
+        if (purchaseCount > 0) {
+            setDeleteCountdown(5);
+            setCanConfirmDelete(false);
+        } else {
+            setDeleteCountdown(0);
+            setCanConfirmDelete(true);
+        }
         setDeleteError('');
         setDeleteMessage('');
     };
@@ -273,13 +282,13 @@ function TermSettings({ onTermChange }) {
                 </span>
             </div>
 
-            {message && <div className="success-message">{message}</div>}
-            {error && <div className="error-message">{error}</div>}
-
             {/* Terms Table */}
             <div className="terms-list-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <h3 style={{ margin: 0 }}>Terms</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', minHeight: '38px' }}>
+                    <div style={{ flex: 1 }}>
+                        {message && <div className="success-message" style={{ margin: 0, display: 'inline-block' }}>{message}</div>}
+                        {error && <div className="error-message" style={{ margin: 0, display: 'inline-block' }}>{error}</div>}
+                    </div>
                     <button className="add-button" onClick={() => setShowAddModal(true)}>+ Add</button>
                 </div>
                 {allTerms.length > 0 ? (

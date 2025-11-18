@@ -263,4 +263,75 @@ router.get('/summary/by-staff', async (req, res) => {
     }
 });
 
+// Get purchases for a specific staff member (for their personal view)
+router.get('/staff/:initials', async (req, res) => {
+    try {
+        const staffInitials = req.params.initials.toUpperCase();
+
+        // Get current term settings
+        const termSetting = await getAsync('SELECT value FROM settings WHERE key = ?', ['current_term']);
+        const yearSetting = await getAsync('SELECT value FROM settings WHERE key = ?', ['current_academic_year']);
+        const currentTerm = termSetting?.value || 'Michaelmas';
+        const currentYear = yearSetting?.value || '2024-25';
+
+        // Get purchases for current term
+        const currentTermPurchases = await allAsync(`
+            SELECT 
+                p.id,
+                p.itemId,
+                COALESCE(p.item_name, i.name) as itemName,
+                p.quantity,
+                p.price,
+                p.term,
+                p.academic_year,
+                p.timestamp
+            FROM purchases p
+            LEFT JOIN items i ON p.itemId = i.id
+            WHERE p.staffInitials = ? AND p.term = ? AND p.academic_year = ?
+            ORDER BY p.timestamp DESC
+        `, [staffInitials, currentTerm, currentYear]);
+
+        // Get current term summary
+        const currentTermSummary = await getAsync(`
+            SELECT 
+                COUNT(p.id) as itemCount,
+                ROUND(SUM(p.price * p.quantity), 2) as totalSpent
+            FROM purchases p
+            WHERE p.staffInitials = ? AND p.term = ? AND p.academic_year = ?
+        `, [staffInitials, currentTerm, currentYear]);
+
+        // Get all-time summary by term
+        const termSummaries = await allAsync(`
+            SELECT 
+                p.term,
+                p.academic_year,
+                COUNT(p.id) as itemCount,
+                ROUND(SUM(p.price * p.quantity), 2) as totalSpent
+            FROM purchases p
+            WHERE p.staffInitials = ?
+            GROUP BY p.term, p.academic_year
+            ORDER BY p.academic_year DESC, 
+                CASE p.term 
+                    WHEN 'Trinity' THEN 1 
+                    WHEN 'Hilary' THEN 2 
+                    WHEN 'Michaelmas' THEN 3 
+                END
+        `, [staffInitials]);
+
+        res.json({
+            currentTerm,
+            currentYear,
+            currentTermPurchases,
+            currentTermSummary: {
+                itemCount: currentTermSummary?.itemCount || 0,
+                totalSpent: currentTermSummary?.totalSpent || 0
+            },
+            termSummaries
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
