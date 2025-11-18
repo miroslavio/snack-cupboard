@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import UserSelection from './components/UserSelection';
@@ -8,6 +8,7 @@ import AdminPanel from './components/AdminPanel';
 import PasswordModal from './components/PasswordModal';
 import ConfirmCheckoutModal from './components/ConfirmCheckoutModal';
 import StaffPurchaseHistory from './components/StaffPurchaseHistory';
+import InactivityModal from './components/InactivityModal';
 import { Settings, Home } from 'lucide-react';
 
 
@@ -24,10 +25,94 @@ function App() {
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [currentTerm, setCurrentTerm] = useState('');
     const [currentYear, setCurrentYear] = useState('');
+    const [showInactivityModal, setShowInactivityModal] = useState(false);
+    const [inactivityCountdown, setInactivityCountdown] = useState(30);
+
+    const inactivityTimerRef = useRef(null);
+    const warningTimerRef = useRef(null);
+    const countdownIntervalRef = useRef(null);
+    const lastActivityRef = useRef(Date.now());
+
+    const INACTIVITY_TIMEOUT = 4 * 60 * 1000; // 4 minutes
+    const WARNING_TIME = 30 * 1000; // 30 seconds warning
 
     useEffect(() => {
         fetchCurrentTerm();
+        setupInactivityTracking();
+        return () => {
+            clearInactivityTimers();
+        };
     }, []);
+
+    const clearInactivityTimers = () => {
+        if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+        if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+
+    const resetInactivityTimer = useCallback(() => {
+        lastActivityRef.current = Date.now();
+        setShowInactivityModal(false);
+        setInactivityCountdown(30);
+        clearInactivityTimers();
+
+        // Set timer for warning (3.5 minutes)
+        warningTimerRef.current = setTimeout(() => {
+            setShowInactivityModal(true);
+            setInactivityCountdown(30);
+
+            // Start countdown
+            countdownIntervalRef.current = setInterval(() => {
+                setInactivityCountdown(prev => {
+                    if (prev <= 1) {
+                        handleInactivityTimeout();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }, INACTIVITY_TIMEOUT - WARNING_TIME);
+    }, []);
+
+    const setupInactivityTracking = () => {
+        const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+
+        const handleActivity = () => {
+            resetInactivityTimer();
+        };
+
+        events.forEach(event => {
+            document.addEventListener(event, handleActivity);
+        });
+
+        // Initial timer setup
+        resetInactivityTimer();
+
+        // Cleanup function
+        return () => {
+            events.forEach(event => {
+                document.removeEventListener(event, handleActivity);
+            });
+        };
+    };
+
+    const handleInactivityTimeout = () => {
+        clearInactivityTimers();
+        setShowInactivityModal(false);
+        handleReturnHome();
+    };
+
+    const handleStayActive = () => {
+        resetInactivityTimer();
+    };
+
+    const handleReturnHome = () => {
+        setCurrentPage('user-selection');
+        setSelectedStaff(null);
+        setBasket([]);
+        setIsAdmin(false);
+        setIsAuthenticated(false);
+    };
 
     const fetchCurrentTerm = async () => {
         try {
@@ -236,6 +321,13 @@ function App() {
                 onConfirm={handleConfirmCheckout}
                 onCancel={() => setShowCheckoutModal(false)}
             />
+
+            {showInactivityModal && (
+                <InactivityModal
+                    timeRemaining={inactivityCountdown}
+                    onStayActive={handleStayActive}
+                />
+            )}
             {/* Optionally show error in modal if needed */}
             {/* {checkoutError && <div className="message" style={{ color: 'red' }}>{checkoutError}</div>} */}
         </div>
