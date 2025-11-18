@@ -10,7 +10,8 @@ console.log('Purchases routes module loaded');
 // Record a purchase
 router.post('/', async (req, res) => {
     try {
-        const { staffInitials, items } = req.body;
+        const { staffInitials: rawStaffInitials, items } = req.body;
+        const staffInitials = rawStaffInitials?.toUpperCase();
         if (!staffInitials || !items || items.length === 0) {
             return res.status(400).json({ error: 'staffInitials and items are required' });
         }
@@ -70,7 +71,8 @@ router.get('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { staffInitials, itemName, quantity, totalPrice } = req.body;
+        const { staffInitials: rawStaffInitials, itemName, quantity, totalPrice } = req.body;
+        const staffInitials = rawStaffInitials?.toUpperCase();
 
         if (!staffInitials || !itemName || !quantity || !totalPrice) {
             return res.status(400).json({ error: 'All fields are required' });

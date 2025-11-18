@@ -21,7 +21,8 @@ router.get('/', async (req, res) => {
         if (search) {
             conditions.push('(forename LIKE ? OR surname LIKE ? OR initials LIKE ?)');
             const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm, searchTerm);
+            const searchTermUpper = `%${search.toUpperCase()}%`;
+            params.push(searchTerm, searchTerm, searchTermUpper);
         }
 
         if (conditions.length > 0) {
@@ -74,7 +75,7 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
             const parts = lines[i].split(',').map(p => p.trim());
             if (parts.length > Math.max(initialsIdx, surnameIdx, forenameIdx)) {
                 try {
-                    const initials = parts[initialsIdx];
+                    const initials = parts[initialsIdx].toUpperCase();
                     const surname = parts[surnameIdx];
                     const forename = parts[forenameIdx];
 
@@ -132,7 +133,8 @@ router.post('/import', express.text({ type: 'text/csv' }), async (req, res) => {
 // Create single staff member
 router.post('/', express.json(), async (req, res) => {
     try {
-        const { initials, surname, forename } = req.body;
+        const { initials: rawInitials, surname, forename } = req.body;
+        const initials = rawInitials?.toUpperCase();
         if (!initials || !surname || !forename) {
             return res.status(400).json({ error: 'initials, surname and forename are required' });
         }
@@ -180,7 +182,7 @@ router.post('/', express.json(), async (req, res) => {
 // Archive a staff member by initials (soft delete)
 router.delete('/:initials', async (req, res) => {
     try {
-        const { initials } = req.params;
+        const initials = req.params.initials.toUpperCase();
         await runAsync('UPDATE staff SET archived_at = CURRENT_TIMESTAMP WHERE initials = ?', [initials]);
         res.json({ message: 'Staff member archived' });
     } catch (err) {
@@ -192,7 +194,7 @@ router.delete('/:initials', async (req, res) => {
 // Restore archived staff member
 router.put('/:initials/restore', async (req, res) => {
     try {
-        const { initials } = req.params;
+        const initials = req.params.initials.toUpperCase();
         await runAsync('UPDATE staff SET archived_at = NULL WHERE initials = ?', [initials]);
         res.json({ message: 'Staff member restored' });
     } catch (err) {
@@ -205,7 +207,7 @@ router.put('/:initials/restore', async (req, res) => {
 // Can only delete archived staff to prevent accidental deletion
 router.delete('/:initials/permanent', async (req, res) => {
     try {
-        const { initials } = req.params;
+        const initials = req.params.initials.toUpperCase();
 
         // Check if staff is archived
         const staff = await getAsync('SELECT archived_at FROM staff WHERE initials = ?', [initials]);
@@ -228,7 +230,7 @@ router.delete('/:initials/permanent', async (req, res) => {
 // Update a staff member (forename, surname) by initials
 router.put('/:initials', express.json(), async (req, res) => {
     try {
-        const { initials } = req.params;
+        const initials = req.params.initials.toUpperCase();
         const { forename, surname } = req.body;
         if (!forename || !surname) {
             return res.status(400).json({ error: 'forename and surname are required' });
@@ -249,7 +251,8 @@ router.put('/:initials', express.json(), async (req, res) => {
 // Bulk archive staff members
 router.post('/bulk/archive', express.json(), async (req, res) => {
     try {
-        const { staffInitials } = req.body;
+        const { staffInitials: rawStaffInitials } = req.body;
+        const staffInitials = rawStaffInitials?.map(i => i.toUpperCase());
         if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
             return res.status(400).json({ error: 'staffInitials array is required' });
         }
@@ -270,7 +273,8 @@ router.post('/bulk/archive', express.json(), async (req, res) => {
 // Bulk restore staff members
 router.post('/bulk/restore', express.json(), async (req, res) => {
     try {
-        const { staffInitials } = req.body;
+        const { staffInitials: rawStaffInitials } = req.body;
+        const staffInitials = rawStaffInitials?.map(i => i.toUpperCase());
         if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
             return res.status(400).json({ error: 'staffInitials array is required' });
         }
@@ -291,7 +295,8 @@ router.post('/bulk/restore', express.json(), async (req, res) => {
 // Bulk hard delete staff members (only archived)
 router.post('/bulk/delete-permanent', express.json(), async (req, res) => {
     try {
-        const { staffInitials } = req.body;
+        const { staffInitials: rawStaffInitials } = req.body;
+        const staffInitials = rawStaffInitials?.map(i => i.toUpperCase());
         if (!staffInitials || !Array.isArray(staffInitials) || staffInitials.length === 0) {
             return res.status(400).json({ error: 'staffInitials array is required' });
         }

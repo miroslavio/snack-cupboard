@@ -86,55 +86,148 @@ export function initializeDatabase() {
                 }
 
                 const hasStaffId = columns.some(col => col.name === 'staffId');
-                const hasStaffInitials = columns.some(col => col.name === 'initials');
 
-                if (hasStaffId && hasStaffInitials) {
+                if (hasStaffId) {
                     console.log('Migrating staff table from staffId to initials as primary identifier...');
 
-                    // Check if purchases table needs migration
-                    db.all(`PRAGMA table_info(purchases)`, [], (err, purchaseCols) => {
+                    // Recreate staff table to remove staffId column entirely
+                    console.log('Recreating staff table to remove staffId column completely...');
+
+                    db.run(`CREATE TABLE IF NOT EXISTS staff_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        initials TEXT UNIQUE NOT NULL,
+                        surname TEXT NOT NULL,
+                        forename TEXT NOT NULL,
+                        archived_at DATETIME DEFAULT NULL
+                    )`, (err) => {
                         if (err) {
-                            console.error('Error checking purchases table:', err);
+                            console.error('Error creating staff_new table:', err);
                             return;
                         }
 
-                        const hasOldStaffId = purchaseCols.some(col => col.name === 'staffId');
-                        const hasNewStaffInitials = purchaseCols.some(col => col.name === 'staffInitials');
+                        // Copy all data from old table to new (excluding staffId)
+                        db.run(`INSERT INTO staff_new (id, initials, surname, forename, archived_at)
+                                SELECT id, initials, surname, forename, archived_at FROM staff`, (err) => {
+                            if (err) {
+                                console.error('Error copying staff data:', err);
+                                return;
+                            }
 
-                        if (hasOldStaffId && !hasNewStaffInitials) {
-                            // Add new staffInitials column to purchases
-                            db.run(`ALTER TABLE purchases ADD COLUMN staffInitials TEXT`, (err) => {
-                                if (err && !err.message.includes('duplicate column')) {
-                                    console.error('Error adding staffInitials to purchases:', err);
+                            // Drop old table and rename new one
+                            db.run(`DROP TABLE staff`, (err) => {
+                                if (err) {
+                                    console.error('Error dropping old staff table:', err);
                                     return;
                                 }
 
-                                // Migrate data: copy initials from staff table to purchases
-                                db.run(`
-                                    UPDATE purchases 
-                                    SET staffInitials = (
-                                        SELECT staff.initials 
-                                        FROM staff 
-                                        WHERE staff.staffId = purchases.staffId
-                                    )
-                                    WHERE staffInitials IS NULL
-                                `, (err) => {
+                                db.run(`ALTER TABLE staff_new RENAME TO staff`, (err) => {
                                     if (err) {
-                                        console.error('Error migrating purchase data:', err);
-                                        return;
+                                        console.error('Error renaming staff_new to staff:', err);
+                                    } else {
+                                        console.log('Staff table successfully migrated - staffId column removed');
                                     }
-                                    console.log('Successfully migrated purchases to use staff initials');
-
-                                    // Note: We keep the old staffId column in purchases for now for safety
-                                    // It can be manually dropped later if needed
                                 });
                             });
-                        }
+                        });
                     });
+                } else {
+                    console.log('Staff table already migrated (no staffId column)');
+                }
+            });
 
-                    // Note: We keep the old staffId column in staff for now for safety
-                    // It can be manually dropped later if needed
-                    console.log('Migration check complete. Old staffId columns retained for safety.');
+            // MIGRATION: Check purchases table and migrate if needed (independent of staff migration)
+            db.all(`PRAGMA table_info(purchases)`, [], (err, purchaseCols) => {
+                if (err) {
+                    console.error('Error checking purchases table:', err);
+                    return;
+                }
+
+                const hasOldStaffId = purchaseCols.some(col => col.name === 'staffId');
+                const hasNewStaffInitials = purchaseCols.some(col => col.name === 'staffInitials');
+
+                if (hasOldStaffId) {
+                    console.log('Recreating purchases table to remove staffId column...');
+
+                    // First add staffInitials if it doesn't exist and migrate data
+                    if (!hasNewStaffInitials) {
+                        db.run(`ALTER TABLE purchases ADD COLUMN staffInitials TEXT`, (err) => {
+                            if (err && !err.message.includes('duplicate column')) {
+                                console.error('Error adding staffInitials:', err);
+                                return;
+                            }
+
+                            // Migrate data from staffId to staffInitials using staff table
+                            db.run(`
+                                UPDATE purchases 
+                                SET staffInitials = (
+                                    SELECT staff.initials 
+                                    FROM staff 
+                                    WHERE staff.id = purchases.staffId
+                                )
+                                WHERE staffInitials IS NULL
+                            `, (err) => {
+                                if (err) {
+                                    console.error('Error migrating purchase data to staffInitials:', err);
+                                    return;
+                                }
+
+                                // Now recreate the table without staffId
+                                recreatePurchasesTable();
+                            });
+                        });
+                    } else {
+                        // staffInitials already exists, just recreate table
+                        recreatePurchasesTable();
+                    }
+
+                    function recreatePurchasesTable() {
+                        db.run(`CREATE TABLE IF NOT EXISTS purchases_new (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            staffInitials TEXT NOT NULL,
+                            itemId INTEGER NOT NULL,
+                            quantity INTEGER NOT NULL,
+                            price REAL NOT NULL,
+                            item_name TEXT NOT NULL,
+                            term TEXT NOT NULL,
+                            academic_year TEXT NOT NULL,
+                            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                            FOREIGN KEY(staffInitials) REFERENCES staff(initials),
+                            FOREIGN KEY(itemId) REFERENCES items(id)
+                        )`, (err) => {
+                            if (err) {
+                                console.error('Error creating purchases_new:', err);
+                                return;
+                            }
+
+                            // Copy data (excluding staffId)
+                            db.run(`INSERT INTO purchases_new 
+                                SELECT id, staffInitials, itemId, quantity, price, item_name, term, academic_year, timestamp 
+                                FROM purchases`, (err) => {
+                                if (err) {
+                                    console.error('Error copying purchase data:', err);
+                                    return;
+                                }
+
+                                // Drop old and rename
+                                db.run(`DROP TABLE purchases`, (err) => {
+                                    if (err) {
+                                        console.error('Error dropping old purchases:', err);
+                                        return;
+                                    }
+
+                                    db.run(`ALTER TABLE purchases_new RENAME TO purchases`, (err) => {
+                                        if (err) {
+                                            console.error('Error renaming purchases_new:', err);
+                                        } else {
+                                            console.log('Purchases table successfully migrated - staffId removed');
+                                        }
+                                    });
+                                });
+                            });
+                        });
+                    }
+                } else {
+                    console.log('Purchases table already migrated (no staffId column)');
                 }
             });
 

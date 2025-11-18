@@ -55,12 +55,14 @@ export default function StaffManagement() {
 
     const fetchStaff = async (q = '') => {
         try {
+            console.log('Fetching staff with includeArchived:', showArchived);
             const res = await axios.get('/api/staff', {
                 params: {
                     search: q,
                     includeArchived: showArchived
                 }
             });
+            console.log('Fetched staff count:', res.data.length);
             setStaffList(res.data);
         } catch (err) {
             console.error(err);
@@ -336,7 +338,7 @@ export default function StaffManagement() {
                                                     <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
                                                 <td>
-                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value.toUpperCase())} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
                                                 </td>
                                                 <td className="col-actions">
                                                     <button onClick={() => saveEdit(s.initials)} className="table-button">Save</button>
@@ -460,7 +462,7 @@ export default function StaffManagement() {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '12px' }}>
                         <label htmlFor="staff-initials" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Initials</label>
-                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value)} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value.toUpperCase())} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     <div style={{ marginBottom: '12px' }}>
                         <label htmlFor="staff-forename" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Forename</label>
@@ -470,25 +472,22 @@ export default function StaffManagement() {
                         <label htmlFor="staff-surname" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Surname</label>
                         <input id="staff-surname" placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
+                    {message && showAddForm && (
+                        <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
+                            {message}
+                        </div>
+                    )}
                 </div>
-        </div>
-                {
-        message && showAddForm && (
-            <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>
-                {message}
-            </div>
-        )
-    }
-    <div className="form-modal-actions">
-        <button type="button" onClick={() => { setNewStaffId(''); setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>Cancel</button>
-        <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
-    </div>
-            </FormModal >
+                <div className="form-modal-actions">
+                    <button type="button" onClick={() => { setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>Cancel</button>
+                    <button type="submit" className="primary" onClick={handleAdd}>Add Staff</button>
+                </div>
+            </FormModal>
 
             <ConfirmModal
                 open={confirmOpen}
                 title="Archive staff member"
-                message={confirmTarget ? `Are you sure you want to archive ${confirmTarget.displayName} (${confirmTarget.staffId})? They will be hidden but can be restored later.` : 'Are you sure?'}
+                message={confirmTarget ? `Are you sure you want to archive ${confirmTarget.displayName} (${confirmTarget.initials})? They will be hidden but can be restored later.` : 'Are you sure?'}
                 confirmText="Archive"
                 onConfirm={handleArchive}
                 onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
