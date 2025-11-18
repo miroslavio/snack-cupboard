@@ -23,12 +23,12 @@
 }
 
 .inactivity-modal {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 12px;
     padding: 2rem;
     max-width: 400px;
     width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px var(--shadow-lg);
     text-align: center;
     animation: slideUp 0.3s ease;
 }
@@ -64,13 +64,13 @@
 }
 
 .inactivity-modal h2 {
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 1rem;
     font-size: 1.5rem;
 }
 
 .inactivity-modal p {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 1.5rem;
     font-size: 1rem;
     line-height: 1.5;

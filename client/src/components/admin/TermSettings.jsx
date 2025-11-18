@@ -277,7 +277,7 @@ function TermSettings({ onTermChange }) {
                 >
                     <Info size={20} color="#0066cc" strokeWidth={2.5} />
                 </button>
-                <span style={{ color: '#666', fontSize: '0.95rem' }}>
+                <span className="description-text">
                     Manage academic terms and set which term is active for recording new purchases.
                 </span>
             </div>
@@ -355,7 +355,7 @@ function TermSettings({ onTermChange }) {
                     <p style={{ marginTop: 0 }}>
                         Term management allows you to organize purchases by academic terms and years.
                     </p>
-                    <ul style={{ marginLeft: '1.5rem', color: '#555' }}>
+                    <ul style={{ marginLeft: '1.5rem' }}>
                         <li>The <strong>active term</strong> is automatically used for all new purchases</li>
                         <li>Add new terms at the start of each academic period</li>
                         <li>Switch the active term by clicking "Set Active" on any term</li>

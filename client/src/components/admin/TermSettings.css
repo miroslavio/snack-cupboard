@@ -1,7 +1,12 @@
 @import './admin-common.css';
 
+.description-text {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
 .term-settings .section-description {
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
 }
@@ -9,9 +14,9 @@
 .term-settings .add-term-section {
     margin-bottom: 1.5rem;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background-color: var(--bg-tertiary);
     border-radius: 8px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--border-light);
 }
 
 .term-settings .add-term-section h3 {
@@ -35,14 +40,14 @@
     margin-bottom: 0.25rem;
     font-size: 0.875rem;
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .term-settings .form-input {
     width: 100%;
     padding: 0.6rem;
     border-radius: 6px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     font-size: 1rem;
     transition: border-color 0.2s ease;
 }
@@ -82,7 +87,7 @@
 }
 
 .term-settings tr.active-row td {
-    background: #f5f7ff;
+    background: var(--bg-tertiary);
 }
 
 .term-settings .terms-list td {
@@ -104,7 +109,7 @@
 
 .term-settings .terms-list td.col-purchases {
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .term-settings .terms-list .table-button {
@@ -128,7 +133,7 @@
 }
 
 .term-settings .status-inactive {
-    color: #999;
+    color: var(--text-tertiary);
     font-size: 1rem;
 }
 
@@ -183,22 +188,28 @@
 }
 
 .term-settings .info-box {
-    background: #e7f3ff;
-    border: 2px solid #b3d9ff;
+    background: rgba(102, 126, 234, 0.2);
+    border: 2px solid rgba(102, 126, 234, 0.5);
     border-radius: 8px;
     padding: 1rem;
     margin-top: 1rem;
 }
 
+.term-settings .info-box,
+.term-settings .info-box p,
+.term-settings .info-box li {
+    color: var(--text-primary);
+}
+
 .term-settings .info-box strong {
-    color: #333;
+    color: var(--text-primary);
+    font-weight: 700;
 }
 
 .term-settings .info-box ul {
     margin-left: 1.5rem;
     margin-bottom: 0;
     margin-top: 0.5rem;
-    color: #555;
 }
 
 @keyframes successPulse {

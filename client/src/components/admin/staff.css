@@ -6,7 +6,7 @@
     margin-top: 0.5rem;
     padding: 0.75rem;
     border-radius: 6px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
 }
 
 .staff-management .staff-actions {
@@ -15,7 +15,7 @@
 
 .staff-management .message {
     margin-top: 0.75rem;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .staff-add {
@@ -28,7 +28,7 @@
 .staff-add input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
 }
 
 .staff-list-container {
@@ -44,8 +44,8 @@
 }
 
 .staff-list {
-    background: white;
-    border: 2px solid #eee;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
     border-radius: 8px;
     padding: 0.5rem;
     flex: 1;
@@ -69,7 +69,7 @@
 }
 
 .staff-row .staff-meta {
-    color: #666;
+    color: var(--text-secondary);
     margin-left: 1rem;
 }
 
@@ -79,8 +79,8 @@
 }
 
 .staff-management .archived-row td {
-    background: #f9f9f9;
-    color: #999;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
 }
 
 .staff-management .archived-row .staff-main {

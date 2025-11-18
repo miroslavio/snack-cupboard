@@ -9,7 +9,7 @@ import PasswordModal from './components/PasswordModal';
 import ConfirmCheckoutModal from './components/ConfirmCheckoutModal';
 import StaffPurchaseHistory from './components/StaffPurchaseHistory';
 import InactivityModal from './components/InactivityModal';
-import { Settings, Home } from 'lucide-react';
+import { Settings, Home, Moon, Sun } from 'lucide-react';
 
 
 function App() {
@@ -27,6 +27,10 @@ function App() {
     const [currentYear, setCurrentYear] = useState('');
     const [showInactivityModal, setShowInactivityModal] = useState(false);
     const [inactivityCountdown, setInactivityCountdown] = useState(30);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode');
+        return saved === 'true';
+    });
 
     const inactivityTimerRef = useRef(null);
     const warningTimerRef = useRef(null);
@@ -43,6 +47,15 @@ function App() {
             clearInactivityTimers();
         };
     }, []);
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        localStorage.setItem('darkMode', isDarkMode);
+    }, [isDarkMode]);
+
+    const toggleDarkMode = () => {
+        setIsDarkMode(prev => !prev);
+    };
 
     const clearInactivityTimers = () => {
         if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
@@ -241,6 +254,14 @@ function App() {
                         {currentTerm && currentYear && (
                             <span className="header-term-badge">{currentTerm} {currentYear}</span>
                         )}
+                        <button
+                            className="theme-toggle-btn"
+                            onClick={toggleDarkMode}
+                            aria-label="Toggle dark mode"
+                            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                        >
+                            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
                         {currentPage === 'admin' ? (
                             <button
                                 className="settings-btn"

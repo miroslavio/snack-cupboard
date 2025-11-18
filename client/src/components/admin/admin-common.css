@@ -6,7 +6,7 @@
 .purchases-management .search-input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
 }
 
 .items-management input,
@@ -14,7 +14,7 @@
 .purchases-management input {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
 }
 
 /* Layout containers */
@@ -31,13 +31,14 @@
 .staff-management .staff-list,
 .purchases-management .purchases-list,
 .term-settings .terms-list {
-    background: white;
-    border: 2px solid #eee;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
     border-radius: 8px;
     flex: 1;
     min-height: 0;
     overflow: auto;
     padding: 0;
+    position: relative;
 }
 
 /* Messages */
@@ -45,7 +46,7 @@
 .staff-management .message,
 .purchases-management .message {
     margin-top: 0.75rem;
-    color: #333;
+    color: var(--text-primary);
 }
 
 /* Table defaults */
@@ -66,8 +67,8 @@
     text-align: left;
     padding: 0.75rem 0.5rem;
     font-weight: 700;
-    background: linear-gradient(to bottom, #f8f9fa 0%, #f1f3f5 100%);
-    color: #495057;
+    background: var(--table-header-bg);
+    color: var(--table-header-text);
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -92,7 +93,7 @@
 .purchases-management tbody td,
 .term-settings tbody td {
     padding: 0.6rem 0.5rem;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid var(--border-light);
     vertical-align: middle;
     font-size: 0.9em;
 }
@@ -101,21 +102,21 @@
 .staff-management tbody tr:nth-child(even),
 .purchases-management tbody tr:nth-child(even),
 .term-settings tbody tr:nth-child(even) {
-    background-color: #f8f9fa;
+    background-color: var(--table-row-even);
 }
 
 .items-management tbody tr:nth-child(odd),
 .staff-management tbody tr:nth-child(odd),
 .purchases-management tbody tr:nth-child(odd),
 .term-settings tbody tr:nth-child(odd) {
-    background-color: white;
+    background-color: var(--bg-secondary);
 }
 
 .items-management tbody tr:hover,
 .staff-management tbody tr:hover,
 .purchases-management tbody tr:hover,
 .term-settings tbody tr:hover {
-    background-color: #e9ecef;
+    background-color: var(--table-row-hover);
 }
 
 .items-management tbody tr:last-child td,
@@ -137,13 +138,13 @@
 .purchases-management .col-price {
     width: 110px;
     text-align: right;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .purchases-management .col-quantity {
     width: 80px;
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 
@@ -151,11 +152,13 @@
 .items-management tbody .col-actions,
 .staff-management tbody .col-actions,
 .purchases-management tbody .col-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 8px;
     text-align: right;
+}
+
+.items-management tbody .col-actions>*,
+.staff-management tbody .col-actions>*,
+.purchases-management tbody .col-actions>* {
+    margin-left: 8px;
 }
 
 /* Edit inputs within tables */
@@ -164,7 +167,7 @@
     padding: 0.4rem;
     margin-bottom: 0.5rem;
     border-radius: 6px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     width: 100%;
     font-size: 1rem;
     transition: border-color 0.2s ease;
@@ -181,9 +184,9 @@
 .staff-management select.edit-input,
 .purchases-management select.edit-input {
     padding: 0.4rem 2rem 0.4rem 0.4rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     border-radius: 6px;
-    background: white;
+    background: var(--bg-secondary);
     font-size: 1rem;
     cursor: pointer;
     appearance: none;
@@ -197,7 +200,7 @@
 .items-management select.edit-input:hover,
 .staff-management select.edit-input:hover,
 .purchases-management select.edit-input:hover {
-    border-color: #999;
+    border-color: var(--text-tertiary);
 }
 
 .items-management select.edit-input:focus,
@@ -236,12 +239,12 @@
 }
 
 .add-button.secondary {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .add-button.secondary:hover {
-    background: #d0d0d0;
+    background: var(--table-row-hover);
     opacity: 1;
 }
 
@@ -269,7 +272,7 @@
 /* Misc */
 .no-results {
     padding: 1rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .item-main,
@@ -301,11 +304,11 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: white;
+    background: var(--bg-secondary);
     padding: 0.75rem 1.25rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px var(--shadow-sm);
 }
 
 .items-management .search-container svg,
@@ -332,7 +335,7 @@
 .items-management .search-container .search-input::placeholder,
 .staff-management .search-container .search-input::placeholder,
 .purchases-management .search-container .search-input::placeholder {
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 .items-management .search-wrapper,
@@ -341,8 +344,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    background: white;
-    border: 2px solid #eee;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
     border-radius: 8px;
     padding: 0.5rem 1rem;
     gap: 0.75rem;
@@ -352,7 +355,7 @@
 .staff-management .search-icon,
 .purchases-management .search-icon {
     font-size: 1.1rem;
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 .items-management .search-wrapper .search-input,
@@ -375,10 +378,10 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
+    background: var(--bg-secondary);
     border: 2px solid #667eea;
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px var(--shadow-md);
     max-height: 250px;
     overflow-y: auto;
     z-index: 1000;
@@ -391,7 +394,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-light);
     transition: background 0.15s;
 }
 
@@ -400,12 +403,12 @@
 }
 
 .item-dropdown-option:hover {
-    background: #f8f9ff;
+    background: var(--table-row-hover);
 }
 
 .item-dropdown-option .item-name {
     font-weight: 500;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .item-dropdown-option .item-price {

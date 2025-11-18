@@ -1,12 +1,12 @@
 .basket {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     padding: 1.5rem;
     height: fit-content;
     position: sticky;
     top: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px var(--shadow-sm);
 }
 
 .basket-header {
@@ -20,13 +20,13 @@
 .basket-header h3 {
     margin: 0;
     font-size: 1.2rem;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .empty-basket {
     text-align: center;
     padding: 2rem 1rem;
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 .empty-basket p {
@@ -45,7 +45,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border-light);
     gap: 0.75rem;
 }
 
@@ -60,7 +60,7 @@
 
 .item-name {
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
     font-size: 0.95rem;
     word-break: break-word;
 }
@@ -69,7 +69,7 @@
     display: flex;
     gap: 0.5rem;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-top: 0.25rem;
 }
 
@@ -107,7 +107,7 @@
 }
 
 .basket-summary {
-    background: #f9f9f9;
+    background: var(--bg-tertiary);
     padding: 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;
@@ -117,7 +117,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.95rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
 }
 
@@ -126,9 +126,9 @@
     justify-content: space-between;
     font-size: 1.2rem;
     font-weight: 700;
-    color: #333;
+    color: var(--text-primary);
     padding-top: 0.5rem;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--border-color);
 }
 
 .checkout-btn {

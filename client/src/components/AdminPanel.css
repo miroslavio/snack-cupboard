@@ -1,8 +1,8 @@
 .admin-panel {
-    background: white;
+    background: var(--bg-secondary);
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 12px var(--shadow-sm);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -22,13 +22,14 @@
 }
 
 .tab-btn {
-    background: white;
-    border: 2px solid #ddd;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-color);
     padding: 0.5rem 1rem;
     display: flex;
     gap: 0.5rem;
     align-items: center;
     border-radius: 6px;
+    color: var(--text-primary);
 }
 
 .tab-btn.active {

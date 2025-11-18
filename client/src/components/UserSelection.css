@@ -17,7 +17,7 @@
 }
 
 .selection-title p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 1rem;
 }
 
@@ -25,12 +25,12 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: white;
+    background: var(--bg-secondary);
     padding: 0.75rem 1.25rem;
-    border: 2px solid #ddd;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 4px var(--shadow-sm);
     flex-shrink: 0;
 }
 
@@ -45,19 +45,21 @@
     padding: 0;
     font-size: 1rem;
     outline: none;
+    color: var(--text-primary);
+    background: transparent;
 }
 
 .search-input::placeholder {
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 .loading,
 .no-results {
     text-align: center;
     padding: 3rem 1rem;
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 1.1rem;
 }
 
@@ -82,8 +84,8 @@
 }
 
 .staff-card {
-    background: white;
-    border: 2px solid #e0e0e0;
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
     border-radius: 8px;
     padding: 1.5rem;
     text-align: center;
@@ -106,7 +108,7 @@
 .staff-name {
     font-size: 1.2rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .staff-info {
@@ -114,18 +116,18 @@
     justify-content: center;
     gap: 1rem;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .initials {
-    background: #f0f0f0;
+    background: var(--bg-tertiary);
     padding: 0.25rem 0.75rem;
     border-radius: 4px;
     font-weight: 600;
 }
 
 .staff-id {
-    color: #999;
+    color: var(--text-tertiary);
 }
 
 @media (max-width: 768px) {
