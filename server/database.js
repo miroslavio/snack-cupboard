@@ -1,11 +1,21 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'snacks.db');
+// Allow overriding DB location via env; default to ../data/snacks.db
+const DB_PATH = process.env.SNACKCUPBOARD_DB_PATH
+    ? path.resolve(process.env.SNACKCUPBOARD_DB_PATH)
+    : path.join(__dirname, '..', 'data', 'snacks.db');
+
+// Ensure directory exists to avoid SQLITE_CANTOPEN on first run
+const dbDir = path.dirname(DB_PATH);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
 
 const db = new sqlite3.Database(DB_PATH);
 

@@ -6,7 +6,8 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:3001',
+                // Allow overriding API target with env var for dev flexibility
+                target: process.env.VITE_API_TARGET || 'http://localhost:3001',
                 changeOrigin: true,
             },
         },

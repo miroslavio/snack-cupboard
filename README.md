@@ -63,9 +63,31 @@ npm run dev
 
 This starts:
 
-- **Server**: <http://localhost:3001> (Express API)
-- **Client**: <http://localhost:5173> (Vite dev server)
-g
+- Server: <http://localhost:3001> (Express API)
+- Client: <http://localhost:5173> (Vite dev server)
+
+The database file is automatically created at `data/snacks.db` on first run.
+
+## Database initialization
+
+- The backend uses SQLite and initializes the database automatically on first start.
+- Default location: `data/snacks.db` at the repo root.
+- The data directory is created on demand; no manual step is required.
+- You can override the DB file path with the `SNACKCUPBOARD_DB_PATH` environment variable.
+
+Examples (bash):
+
+```bash
+# Run backend and create DB automatically (default path data/snacks.db)
+npm run dev:server
+
+# Run backend on a different port (if 3001 is busy)
+PORT=3002 npm run dev:server
+
+# Use a custom DB file path
+SNACKCUPBOARD_DB_PATH="/absolute/path/to/my-snacks.db" npm run dev:server
+```
+
 The database file is automatically created at `data/snacks.db` on first run.
 
 ### Production Deployment
@@ -78,7 +100,7 @@ npm run build
 cd ..
 ```
 
-2. Start the server:
+1. Start the server:
 
 ```bash
 npm start
@@ -186,7 +208,7 @@ const handlePasswordSubmit = (password) => {
 
 ## Project Structure
 
-```
+```text
 common-room-snack-cupboard/
 ├── client/                  # React frontend
 │   ├── src/
