@@ -28,6 +28,7 @@ export default function ItemsManagement() {
     const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
     const [bulkRestoreConfirmOpen, setBulkRestoreConfirmOpen] = useState(false);
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
     useEffect(() => { fetchItems(); }, []);
 
@@ -241,7 +242,28 @@ export default function ItemsManagement() {
         }
     };
 
-    const filteredItems = items.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase()));
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedItems = [...items].sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const filteredItems = sortedItems.filter(it => !search || it.name.toLowerCase().includes(search.toLowerCase()));
     const selectedItems = filteredItems.filter(it => selectedItemIds.has(it.id));
     const selectedActive = selectedItems.filter(it => !it.archived_at);
     const selectedArchived = selectedItems.filter(it => it.archived_at);
@@ -281,9 +303,15 @@ export default function ItemsManagement() {
                                     style={{ cursor: 'pointer' }}
                                 />
                             </th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th className="col-price">Price</th>
+                            <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('category')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Category {sortConfig.key === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th className="col-price" onClick={() => handleSort('price')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Price {sortConfig.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
                             <th className="col-actions">Actions</th>
                         </tr>
                     </thead>

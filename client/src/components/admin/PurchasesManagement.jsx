@@ -20,6 +20,7 @@ export default function PurchasesManagement() {
     const [showItemDropdown, setShowItemDropdown] = useState(false);
     const [selectedPurchaseIds, setSelectedPurchaseIds] = useState(new Set());
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
     useEffect(() => {
         fetchPurchases();
@@ -155,7 +156,28 @@ export default function PurchasesManagement() {
         }
     };
 
-    const filtered = purchases.filter(p => {
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedPurchases = [...purchases].sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const filtered = sortedPurchases.filter(p => {
         const q = search.toLowerCase();
         const termYear = p.term && p.academic_year ? `${p.term} ${p.academic_year}` : '';
         return (
@@ -204,12 +226,24 @@ export default function PurchasesManagement() {
                                     style={{ cursor: 'pointer' }}
                                 />
                             </th>
-                            <th>Date & Time</th>
-                            <th>Staff Name</th>
-                            <th>Item</th>
-                            <th className="col-quantity">Qty</th>
-                            <th className="col-price">Total</th>
-                            <th>Term</th>
+                            <th onClick={() => handleSort('timestamp')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Date & Time {sortConfig.key === 'timestamp' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Staff Name {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('itemName')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Item {sortConfig.key === 'itemName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th className="col-quantity" onClick={() => handleSort('quantity')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Qty {sortConfig.key === 'quantity' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th className="col-price" onClick={() => handleSort('totalPrice')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Total {sortConfig.key === 'totalPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('term')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Term {sortConfig.key === 'term' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
                             <th className="col-actions">Actions</th>
                         </tr>
                     </thead>

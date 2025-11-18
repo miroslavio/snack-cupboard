@@ -68,51 +68,20 @@
     height: 100%;
 }
 
-.term-settings .terms-list {
-    background: white;
-    border: 2px solid #eee;
-    border-radius: 8px;
-    padding: 0.5rem;
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-}
+/* Use common table structure - no custom overrides */
 
-.term-settings .terms-list table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.term-settings .terms-list th {
-    padding: 0.75rem 0.5rem;
-    text-align: left;
-    font-weight: 700;
-    color: #333;
-}
-
-.term-settings .terms-list th.col-actions {
-    text-align: right;
-}
-
-.term-settings .terms-list th.col-purchases {
+/* Term-specific column widths */
+.term-settings .col-purchases {
     text-align: center;
     width: 100px;
 }
 
-.term-settings .terms-list tbody tr {
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.term-settings .terms-list tbody tr:last-child {
-    border-bottom: none;
-}
-
 /* Subtle highlight for the currently active term row */
-.term-settings .terms-list tr.active-row {
+.term-settings tr.active-row {
     box-shadow: inset 3px 0 0 #667eea;
 }
 
-.term-settings .terms-list tr.active-row td {
+.term-settings tr.active-row td {
     background: #f5f7ff;
 }
 

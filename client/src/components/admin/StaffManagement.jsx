@@ -26,6 +26,7 @@ export default function StaffManagement() {
     const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
     const [bulkRestoreConfirmOpen, setBulkRestoreConfirmOpen] = useState(false);
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
     useEffect(() => {
         fetchStaff();
@@ -268,7 +269,31 @@ export default function StaffManagement() {
         return (`${s.forename} ${s.surname}`.toLowerCase().includes(q) || s.initials.toLowerCase().includes(q));
     });
 
-    const selectedStaff = filtered.filter(s => selectedInitials.has(s.initials));
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedFiltered = [...filtered].sort((a, b) => {
+        if (!sortConfig.key) return 0;
+        
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        
+        if (typeof aVal === 'string') {
+            aVal = aVal.toLowerCase();
+            bVal = bVal.toLowerCase();
+        }
+        
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const selectedStaff = sortedFiltered.filter(s => selectedInitials.has(s.initials));
     const selectedActive = selectedStaff.filter(s => !s.archived_at);
     const selectedArchived = selectedStaff.filter(s => s.archived_at);
 
@@ -302,22 +327,28 @@ export default function StaffManagement() {
                             <th style={{ width: '40px', textAlign: 'center' }}>
                                 <input
                                     type="checkbox"
-                                    checked={filtered.length > 0 && selectedInitials.size === filtered.length}
+                                    checked={sortedFiltered.length > 0 && selectedInitials.size === sortedFiltered.length}
                                     onChange={toggleSelectAll}
                                     style={{ cursor: 'pointer' }}
                                 />
                             </th>
-                            <th>Forename</th>
-                            <th>Surname</th>
-                            <th>Initials</th>
+                            <th onClick={() => handleSort('forename')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Forename {sortConfig.key === 'forename' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Surname {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th onClick={() => handleSort('initials')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                Initials {sortConfig.key === 'initials' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
                             <th className="col-actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filtered.length === 0 ? (
+                        {sortedFiltered.length === 0 ? (
                             <tr><td colSpan={5} className="no-results">No staff found</td></tr>
                         ) : (
-                            filtered.map(s => {
+                            sortedFiltered.map(s => {
                                 const isArchived = s.archived_at !== null;
                                 return (
                                     <tr key={s.initials} className={isArchived ? 'archived-row' : ''}>
