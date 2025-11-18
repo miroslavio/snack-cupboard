@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Upload, Download, Settings, FileText, Calendar } from 'lucide-react';
+import { Users, Cookie, Download, FileText, Calendar } from 'lucide-react';
 import StaffManagement from './admin/StaffManagement';
 import ItemsManagement from './admin/ItemsManagement';
 import PurchasesManagement from './admin/PurchasesManagement';
@@ -29,14 +29,14 @@ export default function AdminPanel({ onTermChange }) {
                     className={`tab-btn ${activeTab === 'staff' ? 'active' : ''}`}
                     onClick={() => setActiveTab('staff')}
                 >
-                    <Upload size={18} />
+                    <Users size={18} />
                     Manage Staff
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'items' ? 'active' : ''}`}
                     onClick={() => setActiveTab('items')}
                 >
-                    <Settings size={18} />
+                    <Cookie size={18} />
                     Manage Items
                 </button>
                 <button

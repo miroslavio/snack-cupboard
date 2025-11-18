@@ -66,7 +66,11 @@
     text-align: left;
     padding: 0.75rem 0.5rem;
     font-weight: 700;
-    background: white;
+    background: linear-gradient(to bottom, #f8f9fa 0%, #f1f3f5 100%);
+    color: #495057;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     z-index: 10;
 }
 
@@ -80,7 +84,7 @@
     right: 0;
     bottom: 0;
     height: 3px;
-    background: #ddd;
+    background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
 }
 
 .items-management tbody td,
@@ -91,6 +95,27 @@
     border-bottom: 1px solid #f5f5f5;
     vertical-align: middle;
     font-size: 0.9em;
+}
+
+.items-management tbody tr:nth-child(even),
+.staff-management tbody tr:nth-child(even),
+.purchases-management tbody tr:nth-child(even),
+.term-settings tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.items-management tbody tr:nth-child(odd),
+.staff-management tbody tr:nth-child(odd),
+.purchases-management tbody tr:nth-child(odd),
+.term-settings tbody tr:nth-child(odd) {
+    background-color: white;
+}
+
+.items-management tbody tr:hover,
+.staff-management tbody tr:hover,
+.purchases-management tbody tr:hover,
+.term-settings tbody tr:hover {
+    background-color: #e9ecef;
 }
 
 .items-management tbody tr:last-child td,
