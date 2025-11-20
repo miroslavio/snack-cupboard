@@ -101,3 +101,56 @@
 .form-modal-actions button.secondary:hover {
     background: var(--table-row-hover);
 }
+
+/* Unified modal helper styles */
+.modal-option-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+}
+
+.modal-option-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.modal-note {
+    margin: 0.5rem 0 0.75rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.modal-warning {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin: 0.75rem 0 1rem 0;
+}
+
+.modal-warning.danger {
+    background: rgba(255, 107, 107, 0.1);
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    color: #ff6b6b;
+}
+
+.modal-warning.danger strong {
+    color: #ff6b6b;
+}
+
+.csv-textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: monospace;
+    box-sizing: border-box;
+}

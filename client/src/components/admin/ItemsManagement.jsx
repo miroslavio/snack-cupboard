@@ -21,6 +21,7 @@ export default function ItemsManagement() {
     const [editCategory, setEditCategory] = useState('Food');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImportForm, setShowImportForm] = useState(false);
+    const [importMode, setImportMode] = useState('append'); // 'append' or 'replace'
     const [showArchived, setShowArchived] = useState(false);
     const [hardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
     const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
@@ -219,9 +220,10 @@ export default function ItemsManagement() {
         reader.onload = async (e) => {
             const text = e.target.result;
             try {
-                const res = await axios.post('/api/items/import-csv', text, { headers: { 'Content-Type': 'text/csv' } });
+                const res = await axios.post(`/api/items/import-csv?mode=${importMode}`, text, { headers: { 'Content-Type': 'text/csv' } });
                 setMessage(res.data.message);
                 setShowImportForm(false);
+                setImportMode('append');
                 fetchItems();
             } catch (err) {
                 setMessage('Error importing items file: ' + (err.response?.data?.error ?? err.message));
@@ -232,10 +234,11 @@ export default function ItemsManagement() {
 
     const handleImport = async () => {
         try {
-            const res = await axios.post('/api/items/import-csv', csvText, { headers: { 'Content-Type': 'text/csv' } });
+            const res = await axios.post(`/api/items/import-csv?mode=${importMode}`, csvText, { headers: { 'Content-Type': 'text/csv' } });
             setMessage(res.data.message);
             setCsvText('');
             setShowImportForm(false);
+            setImportMode('append');
             fetchItems();
         } catch (err) {
             setMessage('Error importing items: ' + (err.response?.data?.error ?? err.message));
@@ -352,7 +355,11 @@ export default function ItemsManagement() {
                                                     />
                                                 </td>
                                                 <td className="item-main">{it.name}</td>
-                                                <td>{it.category || 'Food'}</td>
+                                                <td>
+                                                    <span className={`category-badge ${(it.category || 'Food').toLowerCase()}`}>
+                                                        {it.category || 'Food'}
+                                                    </span>
+                                                </td>
                                                 <td className="col-price">£{it.price.toFixed(2)}</td>
                                                 <td className="col-actions">
                                                     {isArchived ? (
@@ -417,22 +424,36 @@ export default function ItemsManagement() {
 
             {message && <div className="message">{message}</div>}
 
-            <FormModal open={showImportForm} title="Import Items (CSV)" onClose={() => { setCsvText(''); setShowImportForm(false); }}>
-                <div style={{ marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: name,price,category (category is optional, defaults to Food)</p>
+            <FormModal open={showImportForm} title="Import Items (CSV)" onClose={() => { setCsvText(''); setImportMode('append'); setShowImportForm(false); }}>
+                <div>
+                    <div className="modal-option-row">
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={importMode === 'replace'}
+                                onChange={e => setImportMode(e.target.checked ? 'replace' : 'append')}
+                            />
+                            <span><strong>Replace mode</strong> (unchecked = append new/update existing)</span>
+                        </label>
+                    </div>
+                    {importMode === 'replace' && (
+                        <div className="modal-warning danger">
+                            <strong>Warning:</strong> Replace mode will remove all existing items and import only the CSV list.
+                        </div>
+                    )}
+                    <p className="modal-note">Upload a CSV file or paste CSV text below. Format: <code>name,price,category</code> (category optional, defaults to Food)</p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
-                    <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
+                    <p className="modal-note">Or paste CSV text:</p>
                     <textarea
                         rows={8}
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
                         placeholder={`name,price,category\nChocolate Bar,1.25,Food\nCoke,1.50,Drink`}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontFamily: 'monospace' }}
+                        className="csv-textarea"
                     />
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing items</p>
                 </div>
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setCsvText(''); setShowImportForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setCsvText(''); setImportMode('append'); setShowImportForm(false); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleImport}>Import</button>
                 </div>
             </FormModal>

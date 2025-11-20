@@ -114,15 +114,18 @@
 
 .stat-label {
     font-size: 0.85rem;
-    opacity: 0.9;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: white;
+    opacity: 1;
+    font-weight: 600;
 }
 
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
+    color: white;
 }
 
 .purchases-section {

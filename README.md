@@ -19,7 +19,7 @@ A full-stack web application for tracking snack and drink purchases in a common 
 
 - **Term Management**: Configure academic terms and years; create, delete, and switch between terms
 - **Staff Management**: Add, edit, archive/restore staff members; bulk operations; CSV import with replace/append modes
-- **Items Management**: Manage inventory with pricing and categories; archive/restore items; bulk operations; CSV import
+- **Items Management**: Manage inventory with pricing and categories; archive/restore items; bulk operations; CSV import with replace/append modes (defaults to append)
 - **Purchase Management**: View, edit, and delete purchase history; bulk delete operations; filter by term
 - **Analytics Dashboard**: View popular items, category breakdowns, staff spending trends, and time-based analytics with filtering
 - **Export Purchases**: Download purchase data as CSV with term/year filtering
@@ -167,7 +167,7 @@ Coffee,1.20,Drink
 - `GET /api/items?search=&includeArchived=true` — List all items (with optional search and archived filter)
 - `GET /api/items/:id` — Get single item
 - `POST /api/items` — Create item `{ name, price, category }` (restores if archived)
-- `POST /api/items/import-csv` — Bulk import from CSV (replaces all existing items)
+- `POST /api/items/import-csv?mode=append|replace` — Bulk import from CSV; default `append` updates/restores existing and adds new; `replace` removes all items first
 - `PUT /api/items/:id` — Update item (prevents duplicate names)
 - `DELETE /api/items/:id` — Archive item (soft delete)
 - `PUT /api/items/:id/restore` — Restore archived item

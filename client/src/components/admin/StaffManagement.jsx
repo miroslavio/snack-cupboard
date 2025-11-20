@@ -20,7 +20,7 @@ export default function StaffManagement() {
     const [editSurname, setEditSurname] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [showImportForm, setShowImportForm] = useState(false);
-    const [importMode, setImportMode] = useState('replace'); // 'replace' or 'append'
+    const [importMode, setImportMode] = useState('append'); // 'replace' or 'append'
     const [showArchived, setShowArchived] = useState(false);
     const [selectedInitials, setSelectedInitials] = useState(new Set());
     const [bulkArchiveConfirmOpen, setBulkArchiveConfirmOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function StaffManagement() {
             setMessage(response.data.message);
             setCsvText('');
             setShowImportForm(false);
-            setImportMode('replace');
+            setImportMode('append');
             fetchStaff();
         } catch (err) {
             setMessage('Error importing staff: ' + (err.response?.data?.error ?? err.message));
@@ -95,7 +95,7 @@ export default function StaffManagement() {
                 const res = await axios.post(`/api/staff/import?mode=${importMode}`, text, { headers: { 'Content-Type': 'text/csv' } });
                 setMessage(res.data.message);
                 setShowImportForm(false);
-                setImportMode('replace');
+                setImportMode('append');
                 fetchStaff();
             } catch (err) {
                 setMessage('Error importing staff file: ' + (err.response?.data?.error ?? err.message));
@@ -454,38 +454,37 @@ export default function StaffManagement() {
 
             {message && <div className="message">{message}</div>}
 
-            <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setImportMode('replace'); setShowImportForm(false); }}>
-                <div style={{ marginBottom: '1rem' }}>
-                    <p style={{ margin: '0 0 0.75rem 0', color: '#666' }}>Upload a CSV file or paste CSV text below. Format: Initials,Surname,Forename</p>
+            <FormModal open={showImportForm} title="Import Staff (CSV)" onClose={() => { setCsvText(''); setImportMode('append'); setShowImportForm(false); }}>
+                <div>
+                    {/* Replace toggle at top */}
+                    <div className="modal-option-row">
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={importMode === 'replace'}
+                                onChange={e => setImportMode(e.target.checked ? 'replace' : 'append')}
+                            />
+                            <span><strong>Replace mode</strong> (unchecked = append new staff)</span>
+                        </label>
+                    </div>
+                    {importMode === 'replace' && (
+                        <div className="modal-warning danger">
+                            <strong>Warning:</strong> Replace mode will archive any existing staff not present in the CSV.
+                        </div>
+                    )}
+                    <p className="modal-note">Upload a CSV file or paste CSV text below. Format: <code>Initials,Surname,Forename</code></p>
                     <input type="file" accept="text/csv" onChange={e => handleFileImport(e.target.files[0])} style={{ marginBottom: '1rem' }} />
-                    <p style={{ margin: '1rem 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>Or paste CSV text:</p>
+                    <p className="modal-note">Or paste CSV text:</p>
                     <textarea
                         rows={8}
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
                         placeholder={`Initials,Surname,Forename\nAB,Smith,Alan\nCD,Jones,Carol`}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontFamily: 'monospace' }}
+                        className="csv-textarea"
                     />
-                    <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                            <input
-                                type="checkbox"
-                                checked={importMode === 'append'}
-                                onChange={e => setImportMode(e.target.checked ? 'append' : 'replace')}
-                                style={{ cursor: 'pointer' }}
-                            />
-                            <span style={{ fontWeight: '500' }}>Append mode</span>
-                            <span style={{ color: '#666', fontSize: '0.85rem' }}>(keep existing staff, add new ones only)</span>
-                        </label>
-                    </div>
-                    {importMode === 'replace' && (
-                        <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.85rem', color: '#856404', background: '#fff3cd', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ffc107' }}>
-                            ⚠️ Replace mode: staff not in the CSV will be archived
-                        </p>
-                    )}
                 </div>
                 <div className="form-modal-actions">
-                    <button type="button" onClick={() => { setCsvText(''); setImportMode('replace'); setShowImportForm(false); }}>Cancel</button>
+                    <button type="button" onClick={() => { setCsvText(''); setImportMode('append'); setShowImportForm(false); }}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleImport}>Import</button>
                 </div>
             </FormModal>

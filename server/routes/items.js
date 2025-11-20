@@ -188,6 +188,10 @@ router.put('/:id/restore', async (req, res) => {
 // Import items from CSV
 router.post('/import-csv', express.text({ type: 'text/csv' }), async (req, res) => {
     try {
+        const mode = (req.query.mode || 'append').toLowerCase();
+        if (!['append', 'replace'].includes(mode)) {
+            return res.status(400).json({ error: 'Invalid mode. Use append or replace' });
+        }
         const lines = req.body.split('\n').filter(line => line.trim());
         if (lines.length < 2) {
             return res.status(400).json({ error: 'CSV must have header and at least one data row' });
@@ -203,33 +207,72 @@ router.post('/import-csv', express.text({ type: 'text/csv' }), async (req, res) 
             return res.status(400).json({ error: 'CSV must have columns: name, price (category is optional)' });
         }
 
-        // Clear existing items
-        await runAsync('DELETE FROM items');
+        if (mode === 'replace') {
+            await runAsync('DELETE FROM items');
+            let imported = 0;
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(',').map(p => p.trim());
+                if (parts.length > Math.max(nameIdx, priceIdx)) {
+                    try {
+                        const price = parseFloat(parts[priceIdx]);
+                        if (isNaN(price)) continue;
 
-        // Insert new items
+                        const category = categoryIdx !== -1 && parts[categoryIdx] ? parts[categoryIdx] : 'Food';
+
+                        await runAsync(
+                            'INSERT INTO items (name, price, category) VALUES (?, ?, ?)',
+                            [parts[nameIdx], price, category]
+                        );
+                        imported++;
+                    } catch (err) {
+                        if (!err.message.includes('UNIQUE')) throw err;
+                    }
+                }
+            }
+            return res.json({ message: `Imported ${imported} items` });
+        }
+
+        // Append mode: upsert items and restore archived ones; do not remove others
         let imported = 0;
+        let updated = 0;
         for (let i = 1; i < lines.length; i++) {
             const parts = lines[i].split(',').map(p => p.trim());
             if (parts.length > Math.max(nameIdx, priceIdx)) {
-                try {
-                    const price = parseFloat(parts[priceIdx]);
-                    if (isNaN(price)) continue;
+                const price = parseFloat(parts[priceIdx]);
+                if (isNaN(price)) continue;
+                const name = parts[nameIdx];
+                const category = categoryIdx !== -1 && parts[categoryIdx] ? parts[categoryIdx] : 'Food';
 
-                    const category = categoryIdx !== -1 && parts[categoryIdx] ? parts[categoryIdx] : 'Food';
-
+                const existing = await getAsync('SELECT id, archived_at FROM items WHERE LOWER(name) = LOWER(?)', [name]);
+                if (existing) {
                     await runAsync(
-                        'INSERT INTO items (name, price, category) VALUES (?, ?, ?)',
-                        [parts[nameIdx], price, category]
+                        'UPDATE items SET price = ?, category = ?, archived_at = NULL WHERE id = ?',
+                        [price, category, existing.id]
                     );
-                    imported++;
-                } catch (err) {
-                    // Skip duplicates
-                    if (!err.message.includes('UNIQUE')) throw err;
+                    updated++;
+                } else {
+                    try {
+                        await runAsync(
+                            'INSERT INTO items (name, price, category) VALUES (?, ?, ?)',
+                            [name, price, category]
+                        );
+                        imported++;
+                    } catch (err) {
+                        if (!err.message.includes('UNIQUE')) throw err;
+                        // If unique constraint triggered due to case difference, treat as update
+                        const ex2 = await getAsync('SELECT id FROM items WHERE LOWER(name) = LOWER(?)', [name]);
+                        if (ex2) {
+                            await runAsync(
+                                'UPDATE items SET price = ?, category = ?, archived_at = NULL WHERE id = ?',
+                                [price, category, ex2.id]
+                            );
+                            updated++;
+                        }
+                    }
                 }
             }
         }
-
-        res.json({ message: `Imported ${imported} items` });
+        return res.json({ message: `Imported ${imported} new, updated ${updated} existing item(s)` });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

@@ -23,3 +23,29 @@
     border: 1px solid var(--border-color);
     width: 100%;
 }
+
+/* Category badges */
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.category-badge.food {
+    background: #e3e7ff;
+    color: #4c5fd5;
+}
+
+.category-badge.drink {
+    background: #ffe3f3;
+    color: #d54c8f;
+}
+
+.category-badge.unknown {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}

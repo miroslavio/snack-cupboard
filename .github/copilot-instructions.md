@@ -83,7 +83,7 @@ Concise, project-specific guidance to make AI agents immediately productive in t
 ## CSV Import/Export
 
 - Staff import CSV header: `Initials,Surname,Forename`. Modes: `replace` (archives missing) or `append`.
-- Items import CSV header: `name,price,category?`; import replaces all existing items.
+- Items import CSV header: `name,price,category?`; modes: `append` (default; upsert + restore archived) or `replace` (removes all existing first).
 - Purchases export: see GET `/api/purchases/export/csv` with optional term/year filters.
 
 ## Admin Auth (dev‑only)
