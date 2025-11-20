@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search } from 'lucide-react';
-import './items.css';
+import './admin-common.css';
 import ConfirmModal from '../ConfirmModal';
 import FormModal from '../FormModal';
 
@@ -269,7 +269,7 @@ export default function ItemsManagement() {
     const selectedArchived = selectedItems.filter(it => it.archived_at);
 
     return (
-        <div className="items-management">
+        <div className="admin-section items-management">
             <div className="search-bar-container">
                 <div className="search-container">
                     <Search size={20} />
@@ -279,8 +279,8 @@ export default function ItemsManagement() {
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', marginBottom: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#666' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                     <input
                         type="checkbox"
                         checked={showArchived}
@@ -291,128 +291,129 @@ export default function ItemsManagement() {
                 </label>
             </div>
 
-            <div className="items-list">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40px', textAlign: 'center' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={filteredItems.length > 0 && selectedItemIds.size === filteredItems.length}
-                                    onChange={toggleSelectAll}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                            </th>
-                            <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('category')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Category {sortConfig.key === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-price" onClick={() => handleSort('price')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Price {sortConfig.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredItems.map(it => {
-                            const isArchived = it.archived_at !== null;
-                            return (
-                                <tr key={it.id} className={isArchived ? 'archived-row' : ''}>
-                                    {editingId === it.id && !isArchived ? (
-                                        <>
-                                            <td style={{ textAlign: 'center' }}></td>
-                                            <td>
-                                                <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                            </td>
-                                            <td>
-                                                <select className="edit-input" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
-                                                    <option value="Food">Food</option>
-                                                    <option value="Drink">Drink</option>
-                                                </select>
-                                            </td>
-                                            <td className="col-price">
-                                                <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
-                                            </td>
-                                            <td className="col-actions">
-                                                <button onClick={() => saveEdit(it.id)} className="table-button">Save</button>
-                                                <button onClick={cancelEdit} className="table-button">Cancel</button>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedItemIds.has(it.id)}
-                                                    onChange={() => toggleSelectItem(it.id)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                            </td>
-                                            <td className="item-main">{it.name}</td>
-                                            <td>{it.category || 'Food'}</td>
-                                            <td className="col-price">£{it.price.toFixed(2)}</td>
-                                            <td className="col-actions">
-                                                {isArchived ? (
-                                                    <>
-                                                        <button onClick={() => handleRestore(it.id, it.name)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
-                                                        <button onClick={() => handleHardDeleteRequest(it)} className="delete-btn table-button">Delete</button>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <button onClick={() => startEdit(it)} className="table-button">Edit</button>
-                                                        <button onClick={() => handleDeleteRequest(it)} className="table-button" style={{ background: '#ff9800', color: 'white' }}>Archive</button>
-                                                    </>
-                                                )}
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-
-            {selectedItemIds.size > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f0f4ff', border: '2px solid #667eea', borderRadius: '8px', marginTop: '0.75rem' }}>
-                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedItemIds.size} selected</span>
-                    {selectedActive.length > 0 && (
-                        <button
-                            onClick={() => setBulkArchiveConfirmOpen(true)}
-                            className="table-button"
-                            style={{ background: '#ff9800', color: 'white' }}
-                        >
-                            Archive ({selectedActive.length})
-                        </button>
-                    )}
-                    {selectedArchived.length > 0 && (
-                        <>
-                            <button
-                                onClick={() => setBulkRestoreConfirmOpen(true)}
-                                className="table-button"
-                                style={{ background: '#667eea', color: 'white' }}
-                            >
-                                Restore ({selectedArchived.length})
-                            </button>
-                            <button
-                                onClick={() => setBulkDeleteConfirmOpen(true)}
-                                className="delete-btn table-button"
-                            >
-                                Delete ({selectedArchived.length})
-                            </button>
-                        </>
-                    )}
-                    <button
-                        onClick={() => setSelectedItemIds(new Set())}
-                        className="table-button"
-                        style={{ marginLeft: 'auto' }}
-                    >
-                        Clear Selection
-                    </button>
+            <div className="table-container">
+                <div className="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={filteredItems.length > 0 && selectedItemIds.size === filteredItems.length}
+                                        onChange={toggleSelectAll}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                </th>
+                                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('category')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Category {sortConfig.key === 'category' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-price" onClick={() => handleSort('price')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Price {sortConfig.key === 'price' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredItems.map(it => {
+                                const isArchived = it.archived_at !== null;
+                                return (
+                                    <tr key={it.id} className={isArchived ? 'archived-row' : ''}>
+                                        {editingId === it.id && !isArchived ? (
+                                            <>
+                                                <td style={{ textAlign: 'center' }}></td>
+                                                <td>
+                                                    <input className="edit-input" value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                                </td>
+                                                <td>
+                                                    <select className="edit-input" value={editCategory} onChange={e => setEditCategory(e.target.value)}>
+                                                        <option value="Food">Food</option>
+                                                        <option value="Drink">Drink</option>
+                                                    </select>
+                                                </td>
+                                                <td className="col-price">
+                                                    <input className="edit-input" value={editPrice} onChange={e => setEditPrice(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveEdit(it.id); if (e.key === 'Escape') cancelEdit(); }} />
+                                                </td>
+                                                <td className="col-actions">
+                                                    <button onClick={() => saveEdit(it.id)} className="table-button">Save</button>
+                                                    <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedItemIds.has(it.id)}
+                                                        onChange={() => toggleSelectItem(it.id)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                </td>
+                                                <td className="item-main">{it.name}</td>
+                                                <td>{it.category || 'Food'}</td>
+                                                <td className="col-price">£{it.price.toFixed(2)}</td>
+                                                <td className="col-actions">
+                                                    {isArchived ? (
+                                                        <>
+                                                            <button onClick={() => handleRestore(it.id, it.name)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
+                                                            <button onClick={() => handleHardDeleteRequest(it)} className="delete-btn table-button">Delete</button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button onClick={() => startEdit(it)} className="table-button">Edit</button>
+                                                            <button onClick={() => handleDeleteRequest(it)} className="table-button" style={{ background: '#ff9800', color: 'white' }}>Archive</button>
+                                                        </>
+                                                    )}
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+                {selectedItemIds.size > 0 && (
+                    <div className="bulk-actions">
+                        <span style={{ fontWeight: 600 }}>{selectedItemIds.size} selected</span>
+                        {selectedActive.length > 0 && (
+                            <button
+                                onClick={() => setBulkArchiveConfirmOpen(true)}
+                                className="table-button"
+                                style={{ background: '#ff9800', color: 'white' }}
+                            >
+                                Archive ({selectedActive.length})
+                            </button>
+                        )}
+                        {selectedArchived.length > 0 && (
+                            <>
+                                <button
+                                    onClick={() => setBulkRestoreConfirmOpen(true)}
+                                    className="table-button"
+                                    style={{ background: '#667eea', color: 'white' }}
+                                >
+                                    Restore ({selectedArchived.length})
+                                </button>
+                                <button
+                                    onClick={() => setBulkDeleteConfirmOpen(true)}
+                                    className="delete-btn table-button"
+                                >
+                                    Delete ({selectedArchived.length})
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={() => setSelectedItemIds(new Set())}
+                            className="table-button"
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            Clear Selection
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {message && <div className="message">{message}</div>}
 
@@ -426,7 +427,7 @@ export default function ItemsManagement() {
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
                         placeholder={`name,price,category\nChocolate Bar,1.25,Food\nCoke,1.50,Drink`}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontFamily: 'monospace' }}
                     />
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#999' }}>⚠️ This will replace all existing items</p>
                 </div>
@@ -439,19 +440,19 @@ export default function ItemsManagement() {
             <FormModal open={showAddForm} title="Add New Item" onClose={() => { setName(''); setPrice(''); setCategory('Food'); setShowAddForm(false); setMessage(''); }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="item-name" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Item Name</label>
-                        <input id="item-name" value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <label htmlFor="item-name" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Item Name</label>
+                        <input id="item-name" value={name} onChange={e => setName(e.target.value)} placeholder="Item name" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="item-category" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Category</label>
-                        <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }}>
+                        <label htmlFor="item-category" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Category</label>
+                        <select id="item-category" value={category} onChange={e => setCategory(e.target.value)} style={{ padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontSize: '1rem', width: '100%', boxSizing: 'border-box' }}>
                             <option value="Food">Food</option>
                             <option value="Drink">Drink</option>
                         </select>
                     </div>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="item-price" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Price</label>
-                        <input id="item-price" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <label htmlFor="item-price" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Price</label>
+                        <input id="item-price" value={price} onChange={e => setPrice(e.target.value)} placeholder="Price (£)" onKeyDown={e => { if (e.key === 'Enter') handleAdd(); }} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                 </div>
                 {message && showAddForm && (

@@ -1,79 +1,16 @@
 @import './admin-common.css';
 
+/* Keep only staff-specific archived styling and textarea override; rely on unified admin-common for layout & table styles */
 .staff-management textarea {
     width: 100%;
     font-family: monospace;
-    margin-top: 0.5rem;
     padding: 0.75rem;
     border-radius: 6px;
     border: 2px solid var(--border-color);
-}
-
-.staff-management .staff-actions {
-    margin-top: 0.5rem;
-}
-
-.staff-management .message {
-    margin-top: 0.75rem;
+    background: var(--input-bg);
     color: var(--text-primary);
 }
 
-.staff-add {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-}
-
-.staff-add input {
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 2px solid var(--border-color);
-}
-
-.staff-list-container {
-    margin-top: 1rem;
-}
-
-.staff-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.staff-list {
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-light);
-    border-radius: 8px;
-    padding: 0.5rem;
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-}
-
-.staff-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem;
-}
-
-.staff-row .staff-actions {
-    margin-top: 0.5rem;
-}
-
-.staff-row .staff-list-container {
-    margin-top: 1rem;
-}
-
-.staff-row .staff-meta {
-    color: var(--text-secondary);
-    margin-left: 1rem;
-}
-
-/* Archived staff styling */
 .staff-management .archived-row {
     opacity: 0.6;
 }

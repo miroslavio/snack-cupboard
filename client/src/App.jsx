@@ -249,7 +249,12 @@ function App() {
         <div className="App">
             <header className="header">
                 <div className="header-content">
-                    <h1 onClick={handleHomeClick} style={{ cursor: 'pointer' }} title="Return to Home">🥨 Snack Cupboard</h1>
+                    <div className="header-left">
+                        <h1 onClick={handleHomeClick} style={{ cursor: 'pointer' }} title="Return to Home">🥨 Snack Cupboard</h1>
+                        {currentPage === 'admin' && (
+                            <span className="header-context">Admin Panel</span>
+                        )}
+                    </div>
                     <div className="header-right">
                         {currentTerm && currentYear && (
                             <span className="header-term-badge">{currentTerm} {currentYear}</span>

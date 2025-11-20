@@ -64,7 +64,6 @@ export default function PurchasesExport() {
 
     return (
         <div className="admin-section">
-            <h2>Export Purchases</h2>
             <p className="section-description">
                 Download a CSV file of purchases for billing and record-keeping.
             </p>

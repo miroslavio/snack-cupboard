@@ -7,6 +7,7 @@ import staffRoutes from './routes/staff.js';
 import itemRoutes from './routes/items.js';
 import purchaseRoutes from './routes/purchases.js';
 import settingsRoutes from './routes/settings.js';
+import resetRoutes from './routes/reset.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +28,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/reset', resetRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

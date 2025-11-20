@@ -294,7 +294,7 @@ router.get('/staff/:initials', async (req, res) => {
         // Get current term summary
         const currentTermSummary = await getAsync(`
             SELECT 
-                COUNT(p.id) as itemCount,
+                COALESCE(SUM(p.quantity), 0) as itemCount,
                 ROUND(SUM(p.price * p.quantity), 2) as totalSpent
             FROM purchases p
             WHERE p.staffInitials = ? AND p.term = ? AND p.academic_year = ?
@@ -305,7 +305,7 @@ router.get('/staff/:initials', async (req, res) => {
             SELECT 
                 p.term,
                 p.academic_year,
-                COUNT(p.id) as itemCount,
+                COALESCE(SUM(p.quantity), 0) as itemCount,
                 ROUND(SUM(p.price * p.quantity), 2) as totalSpent
             FROM purchases p
             WHERE p.staffInitials = ?

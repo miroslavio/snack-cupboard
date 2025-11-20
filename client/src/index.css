@@ -21,6 +21,8 @@
     --table-header-text: #495057;
     --table-row-even: #f8f9fa;
     --table-row-hover: #e9ecef;
+    --active-row-bg: rgba(102, 126, 234, 0.12);
+    --active-row-ring: rgba(102, 126, 234, 0.35);
 }
 
 :root[data-theme="dark"] {
@@ -38,8 +40,10 @@
     --input-bg: #2d2d2d;
     --table-header-bg: linear-gradient(to bottom, #3a3a3a 0%, #2d2d2d 100%);
     --table-header-text: #b0b0b0;
-    --table-row-even: #2d2d2d;
-    --table-row-hover: #3a3a3a;
+    --table-row-even: #252525;
+    --table-row-hover: #333333;
+    --active-row-bg: rgba(102, 126, 234, 0.18);
+    --active-row-ring: rgba(102, 126, 234, 0.4);
 }
 
 body {

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './PasswordModal.css';
 
-export default function PasswordModal({ open, onSubmit, onCancel }) {
+export default function PasswordModal({ open, onSubmit, onCancel, onClose, title, message }) {
+    // Support both onCancel and onClose for backwards compatibility
+    const handleCancel = onCancel || onClose;
+
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
@@ -14,7 +17,7 @@ export default function PasswordModal({ open, onSubmit, onCancel }) {
 
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
-                onCancel();
+                handleCancel?.();
             } else if (e.key === 'Enter' && password.trim()) {
                 handleSubmit();
             }
@@ -22,14 +25,14 @@ export default function PasswordModal({ open, onSubmit, onCancel }) {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [open, password, onCancel]);
+    }, [open, password, handleCancel]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!password.trim()) {
             setError('Please enter a password');
             return;
         }
-        const success = onSubmit(password);
+        const success = await onSubmit(password);
         if (success === false) {
             setError('Incorrect password');
         }
@@ -38,14 +41,14 @@ export default function PasswordModal({ open, onSubmit, onCancel }) {
     if (!open) return null;
 
     return (
-        <div className="password-modal-overlay" onClick={onCancel}>
+        <div className="password-modal-overlay" onClick={handleCancel}>
             <div className="password-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="password-modal-header">
-                    <h3>Admin Access</h3>
-                    <button className="password-modal-close" onClick={onCancel}>×</button>
+                    <h3>{title || 'Admin Access'}</h3>
+                    <button className="password-modal-close" onClick={handleCancel}>×</button>
                 </div>
                 <div className="password-modal-content">
-                    <p>Enter password to access admin panel</p>
+                    <p>{message || 'Enter password to access admin panel'}</p>
                     <input
                         type="password"
                         value={password}
@@ -60,7 +63,7 @@ export default function PasswordModal({ open, onSubmit, onCancel }) {
                     {error && <div className="password-error">{error}</div>}
                 </div>
                 <div className="password-modal-actions">
-                    <button type="button" onClick={onCancel}>Cancel</button>
+                    <button type="button" onClick={handleCancel}>Cancel</button>
                     <button type="submit" className="primary" onClick={handleSubmit}>
                         Unlock
                     </button>

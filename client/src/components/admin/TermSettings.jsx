@@ -251,7 +251,7 @@ function TermSettings({ onTermChange }) {
 
     return (
         <div className="admin-section term-settings">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <button
                     onClick={() => setShowHelpModal(true)}
                     className="info-icon-btn"
@@ -292,51 +292,53 @@ function TermSettings({ onTermChange }) {
                     <button className="add-button" onClick={() => setShowAddModal(true)}>+ Add</button>
                 </div>
                 {allTerms.length > 0 ? (
-                    <div className="terms-list">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Term</th>
-                                    <th className="col-purchases">Purchases</th>
-                                    <th>Status</th>
-                                    <th className="col-actions">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {allTerms.map((t, idx) => (
-                                    <tr key={idx} className={isActive(t.term, t.academic_year) ? 'active-row' : ''}>
-                                        <td>{t.term} {t.academic_year}</td>
-                                        <td className="col-purchases">{t.purchase_count || 0}</td>
-                                        <td>
-                                            {isActive(t.term, t.academic_year) ? (
-                                                <span className="status-badge">Active</span>
-                                            ) : (
-                                                <span className="status-inactive">Inactive</span>
-                                            )}
-                                        </td>
-                                        <td className="col-actions">
-                                            {!isActive(t.term, t.academic_year) && (
-                                                <>
-                                                    <button
-                                                        onClick={() => handleSetActive(t.term, t.academic_year)}
-                                                        className="table-button set-active"
-                                                    >
-                                                        Set Active
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteRequest(t.term, t.academic_year, t.purchase_count)}
-                                                        className="table-button delete-btn"
-                                                        disabled={deleting}
-                                                    >
-                                                        {t.purchase_count === 0 ? 'Delete Term' : 'Delete Data'}
-                                                    </button>
-                                                </>
-                                            )}
-                                        </td>
+                    <div className="table-container">
+                        <div className="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Term</th>
+                                        <th className="col-purchases">Purchases</th>
+                                        <th>Status</th>
+                                        <th className="col-actions">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {allTerms.map((t, idx) => (
+                                        <tr key={idx} className={isActive(t.term, t.academic_year) ? 'active-row' : ''}>
+                                            <td>{t.term} {t.academic_year}</td>
+                                            <td className="col-purchases">{t.purchase_count || 0}</td>
+                                            <td>
+                                                {isActive(t.term, t.academic_year) ? (
+                                                    <span className="status-badge">Active</span>
+                                                ) : (
+                                                    <span className="status-inactive">Inactive</span>
+                                                )}
+                                            </td>
+                                            <td className="col-actions">
+                                                {!isActive(t.term, t.academic_year) && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => handleSetActive(t.term, t.academic_year)}
+                                                            className="table-button set-active"
+                                                        >
+                                                            Set Active
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteRequest(t.term, t.academic_year, t.purchase_count)}
+                                                            className="table-button delete-btn"
+                                                            disabled={deleting}
+                                                        >
+                                                            {t.purchase_count === 0 ? 'Delete Term' : 'Delete Data'}
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 ) : (
                     <div className="info-box">
@@ -462,7 +464,7 @@ function TermSettings({ onTermChange }) {
                                     }
                                 </strong>
                             </p>
-                            <ul style={{ marginLeft: '1.5rem', color: '#856404' }}>
+                            <ul style={{ marginLeft: '1.5rem' }}>
                                 <li>Deleted data cannot be recovered</li>
                                 {deleteTarget?.purchaseCount > 0 && (
                                     <li>Export purchase data before deleting if you need records</li>

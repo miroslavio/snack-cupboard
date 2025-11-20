@@ -91,7 +91,7 @@
     opacity: 0.9;
 }
 
-.form-modal-actions button[type="button"],
+.form-modal-actions button[type="button"]:not(.primary),
 .form-modal-actions button.secondary {
     background: var(--bg-tertiary);
     color: var(--text-primary);

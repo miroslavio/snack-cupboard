@@ -107,13 +107,13 @@
 .success-title {
     margin: 0 0 0.5rem 0;
     font-size: 1.3rem;
-    color: #4CAF50;
+    color: #2e7d32;
     font-weight: 700;
 }
 
 .success-message {
     margin: 0;
-    color: var(--text-secondary);
+    color: #1b5e20;
     font-size: 1rem;
 }
 
@@ -124,4 +124,11 @@
     border-radius: 6px;
     margin-bottom: 1rem;
     font-size: 0.9rem;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .error-message {
+    background: rgba(198, 40, 40, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(198, 40, 40, 0.3);
 }

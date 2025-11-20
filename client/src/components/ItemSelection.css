@@ -34,6 +34,12 @@
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow-sm);
     margin-bottom: 0;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.item-selection .search-container:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .item-selection .search-container svg {

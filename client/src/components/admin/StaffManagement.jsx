@@ -279,15 +279,15 @@ export default function StaffManagement() {
 
     const sortedFiltered = [...filtered].sort((a, b) => {
         if (!sortConfig.key) return 0;
-        
+
         let aVal = a[sortConfig.key];
         let bVal = b[sortConfig.key];
-        
+
         if (typeof aVal === 'string') {
             aVal = aVal.toLowerCase();
             bVal = bVal.toLowerCase();
         }
-        
+
         if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
         if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -298,7 +298,7 @@ export default function StaffManagement() {
     const selectedArchived = selectedStaff.filter(s => s.archived_at);
 
     return (
-        <div className="staff-management">
+        <div className="admin-section staff-management">
             <div className="search-bar-container">
                 <div className="search-container">
                     <Search size={20} />
@@ -308,8 +308,8 @@ export default function StaffManagement() {
                 <button className="add-button" onClick={() => setShowAddForm(true)}>+ Add</button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.75rem', marginBottom: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#666' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                     <input
                         type="checkbox"
                         checked={showArchived}
@@ -320,136 +320,137 @@ export default function StaffManagement() {
                 </label>
             </div>
 
-            <div className="staff-list">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40px', textAlign: 'center' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={sortedFiltered.length > 0 && selectedInitials.size === sortedFiltered.length}
-                                    onChange={toggleSelectAll}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                            </th>
-                            <th onClick={() => handleSort('forename')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Forename {sortConfig.key === 'forename' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Surname {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('initials')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Initials {sortConfig.key === 'initials' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {sortedFiltered.length === 0 ? (
-                            <tr><td colSpan={5} className="no-results">No staff found</td></tr>
-                        ) : (
-                            sortedFiltered.map(s => {
-                                const isArchived = s.archived_at !== null;
-                                return (
-                                    <tr key={s.initials} className={isArchived ? 'archived-row' : ''}>
-                                        {editingId === s.initials && !isArchived ? (
-                                            <>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedInitials.has(s.initials)}
-                                                        onChange={() => toggleSelectStaff(s.initials)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    />
-                                                </td>
-                                                <td>
-                                                    <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
-                                                </td>
-                                                <td>
-                                                    <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
-                                                </td>
-                                                <td>
-                                                    <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value.toUpperCase())} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
-                                                </td>
-                                                <td className="col-actions">
-                                                    <button onClick={() => saveEdit(s.initials)} className="table-button">Save</button>
-                                                    <button onClick={cancelEdit} className="table-button">Cancel</button>
-                                                </td>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedInitials.has(s.initials)}
-                                                        onChange={() => toggleSelectStaff(s.initials)}
-                                                        style={{ cursor: 'pointer' }}
-                                                    />
-                                                </td>
-                                                <td className="staff-main">{s.forename}</td>
-                                                <td className="staff-main">{s.surname}</td>
-                                                <td className="staff-main">{s.initials}</td>
-                                                <td className="col-actions">
-                                                    {isArchived ? (
-                                                        <>
-                                                            <button onClick={() => handleRestore(s.initials, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
-                                                            <button onClick={() => handleHardDeleteRequest(s.initials, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete</button>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <button onClick={() => startEdit(s)} className="table-button">Edit</button>
-                                                            <button className="table-button" style={{ background: '#ff9800', color: 'white' }} onClick={() => handleArchiveRequest(s.initials, `${s.forename} ${s.surname}`)}>Archive</button>
-                                                        </>
-                                                    )}
-                                                </td>
-                                            </>
-                                        )}
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {selectedInitials.size > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#f0f4ff', border: '2px solid #667eea', borderRadius: '8px', marginTop: '0.75rem' }}>
-                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedInitials.size} selected</span>
-                    {selectedActive.length > 0 && (
-                        <button
-                            onClick={() => setBulkArchiveConfirmOpen(true)}
-                            className="table-button"
-                            style={{ background: '#ff9800', color: 'white' }}
-                        >
-                            Archive ({selectedActive.length})
-                        </button>
-                    )}
-                    {selectedArchived.length > 0 && (
-                        <>
-                            <button
-                                onClick={() => setBulkRestoreConfirmOpen(true)}
-                                className="table-button"
-                                style={{ background: '#667eea', color: 'white' }}
-                            >
-                                Restore ({selectedArchived.length})
-                            </button>
-                            <button
-                                onClick={() => setBulkDeleteConfirmOpen(true)}
-                                className="delete-btn table-button"
-                            >
-                                Delete ({selectedArchived.length})
-                            </button>
-                        </>
-                    )}
-                    <button
-                        onClick={() => setSelectedInitials(new Set())}
-                        className="table-button"
-                        style={{ marginLeft: 'auto' }}
-                    >
-                        Clear Selection
-                    </button>
+            <div className="table-container">
+                <div className="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={sortedFiltered.length > 0 && selectedInitials.size === sortedFiltered.length}
+                                        onChange={toggleSelectAll}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                </th>
+                                <th onClick={() => handleSort('forename')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Forename {sortConfig.key === 'forename' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Surname {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('initials')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Initials {sortConfig.key === 'initials' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sortedFiltered.length === 0 ? (
+                                <tr><td colSpan={5} className="no-results">No staff found</td></tr>
+                            ) : (
+                                sortedFiltered.map(s => {
+                                    const isArchived = s.archived_at !== null;
+                                    return (
+                                        <tr key={s.initials} className={isArchived ? 'archived-row' : ''}>
+                                            {editingId === s.initials && !isArchived ? (
+                                                <>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedInitials.has(s.initials)}
+                                                            onChange={() => toggleSelectStaff(s.initials)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input className="edit-input" value={editForename} onChange={e => setEditForename(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    </td>
+                                                    <td>
+                                                        <input className="edit-input" value={editSurname} onChange={e => setEditSurname(e.target.value)} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    </td>
+                                                    <td>
+                                                        <input className="edit-input" value={editInitials} onChange={e => setEditInitials(e.target.value.toUpperCase())} onKeyDown={(ev) => { if (ev.key === 'Enter') saveEdit(s.initials); if (ev.key === 'Escape') cancelEdit(); }} />
+                                                    </td>
+                                                    <td className="col-actions">
+                                                        <button onClick={() => saveEdit(s.initials)} className="table-button">Save</button>
+                                                        <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td style={{ textAlign: 'center' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedInitials.has(s.initials)}
+                                                            onChange={() => toggleSelectStaff(s.initials)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        />
+                                                    </td>
+                                                    <td className="staff-main">{s.forename}</td>
+                                                    <td className="staff-main">{s.surname}</td>
+                                                    <td className="staff-main">{s.initials}</td>
+                                                    <td className="col-actions">
+                                                        {isArchived ? (
+                                                            <>
+                                                                <button onClick={() => handleRestore(s.initials, `${s.forename} ${s.surname}`)} className="table-button" style={{ background: '#667eea', color: 'white' }}>Restore</button>
+                                                                <button onClick={() => handleHardDeleteRequest(s.initials, `${s.forename} ${s.surname}`)} className="delete-btn table-button">Delete</button>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <button onClick={() => startEdit(s)} className="table-button">Edit</button>
+                                                                <button className="table-button" style={{ background: '#ff9800', color: 'white' }} onClick={() => handleArchiveRequest(s.initials, `${s.forename} ${s.surname}`)}>Archive</button>
+                                                            </>
+                                                        )}
+                                                    </td>
+                                                </>
+                                            )}
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+                {selectedInitials.size > 0 && (
+                    <div className="bulk-actions">
+                        <span style={{ fontWeight: 600 }}>{selectedInitials.size} selected</span>
+                        {selectedActive.length > 0 && (
+                            <button
+                                onClick={() => setBulkArchiveConfirmOpen(true)}
+                                className="table-button"
+                                style={{ background: '#ff9800', color: 'white' }}
+                            >
+                                Archive ({selectedActive.length})
+                            </button>
+                        )}
+                        {selectedArchived.length > 0 && (
+                            <>
+                                <button
+                                    onClick={() => setBulkRestoreConfirmOpen(true)}
+                                    className="table-button"
+                                    style={{ background: '#667eea', color: 'white' }}
+                                >
+                                    Restore ({selectedArchived.length})
+                                </button>
+                                <button
+                                    onClick={() => setBulkDeleteConfirmOpen(true)}
+                                    className="delete-btn table-button"
+                                >
+                                    Delete ({selectedArchived.length})
+                                </button>
+                            </>
+                        )}
+                        <button
+                            onClick={() => setSelectedInitials(new Set())}
+                            className="table-button"
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            Clear Selection
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {message && <div className="message">{message}</div>}
 
@@ -463,7 +464,7 @@ export default function StaffManagement() {
                         value={csvText}
                         onChange={e => setCsvText(e.target.value)}
                         placeholder={`Initials,Surname,Forename\nAB,Smith,Alan\nCD,Jones,Carol`}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid #ddd', fontFamily: 'monospace' }}
+                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontFamily: 'monospace' }}
                     />
                     <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #e0e0e0' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
@@ -492,16 +493,16 @@ export default function StaffManagement() {
             <FormModal open={showAddForm} title="Add New Staff Member" onClose={() => { setNewInitials(''); setNewForename(''); setNewSurname(''); setShowAddForm(false); setMessage(''); }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="staff-initials" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Initials</label>
-                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value.toUpperCase())} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <label htmlFor="staff-initials" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Initials</label>
+                        <input id="staff-initials" placeholder="Initials" value={newInitials} onChange={e => setNewInitials(e.target.value.toUpperCase())} onKeyDown={handleAddKeyDown} autoFocus style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="staff-forename" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Forename</label>
-                        <input id="staff-forename" placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <label htmlFor="staff-forename" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Forename</label>
+                        <input id="staff-forename" placeholder="Forename" value={newForename} onChange={e => setNewForename(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     <div style={{ marginBottom: '12px' }}>
-                        <label htmlFor="staff-surname" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', color: '#555', fontWeight: '500' }}>Surname</label>
-                        <input id="staff-surname" placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid #ddd', boxSizing: 'border-box', fontSize: '1rem' }} />
+                        <label htmlFor="staff-surname" style={{ display: 'block', marginBottom: '4px', fontSize: '0.9rem', fontWeight: '500' }}>Surname</label>
+                        <input id="staff-surname" placeholder="Surname" value={newSurname} onChange={e => setNewSurname(e.target.value)} onKeyDown={handleAddKeyDown} style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '2px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)', boxSizing: 'border-box', fontSize: '1rem' }} />
                     </div>
                     {message && showAddForm && (
                         <div style={{ marginTop: '12px', padding: '10px', borderRadius: '6px', backgroundColor: message.includes('Error') || message.includes('exists') ? '#fee' : '#efe', color: message.includes('Error') || message.includes('exists') ? '#c33' : '#363', fontSize: '0.9rem' }}>

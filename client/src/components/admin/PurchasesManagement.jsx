@@ -201,7 +201,7 @@ export default function PurchasesManagement() {
     };
 
     return (
-        <div className="purchases-management">
+        <div className="admin-section purchases-management">
             <div className="search-bar-container">
                 <div className="search-container">
                     <Search size={20} />
@@ -214,157 +214,158 @@ export default function PurchasesManagement() {
                 </div>
             </div>
 
-            <div className="purchases-list">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style={{ width: '40px', textAlign: 'center' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={filtered.length > 0 && selectedPurchaseIds.size === filtered.length}
-                                    onChange={toggleSelectAll}
-                                    style={{ cursor: 'pointer' }}
-                                />
-                            </th>
-                            <th onClick={() => handleSort('timestamp')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Date & Time {sortConfig.key === 'timestamp' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Staff Name {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('itemName')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Item {sortConfig.key === 'itemName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-quantity" onClick={() => handleSort('quantity')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Qty {sortConfig.key === 'quantity' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-price" onClick={() => handleSort('totalPrice')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Total {sortConfig.key === 'totalPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th onClick={() => handleSort('term')} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                Term {sortConfig.key === 'term' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
-                            <th className="col-actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtered.length === 0 ? (
-                            <tr><td colSpan={8} className="no-results">No purchases found</td></tr>
-                        ) : (
-                            filtered.map(p => (
-                                <tr key={p.id}>
-                                    {editingId === p.id ? (
-                                        <>
-                                            <td style={{ textAlign: 'center' }}></td>
-                                            <td>{formatDate(p.timestamp)}</td>
-                                            <td>{editStaffName}</td>
-                                            <td style={{ position: 'relative' }}>
-                                                <input
-                                                    className="edit-input"
-                                                    value={editItemName}
-                                                    onChange={e => handleItemInputChange(e.target.value)}
-                                                    onFocus={() => setShowItemDropdown(true)}
-                                                    onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter') saveEdit(p.id);
-                                                        if (e.key === 'Escape') cancelEdit();
-                                                    }}
-                                                    placeholder="Search items..."
-                                                    autoComplete="off"
-                                                />
-                                                {showItemDropdown && getFilteredItems().length > 0 && (
-                                                    <div className="item-dropdown">
-                                                        {getFilteredItems().slice(0, 8).map(item => (
-                                                            <div
-                                                                key={item.id}
-                                                                className="item-dropdown-option"
-                                                                onMouseDown={() => handleSelectItem(item.name)}
-                                                            >
-                                                                <span className="item-name">{item.name}</span>
-                                                                <span className="item-price">£{item.price.toFixed(2)}</span>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="col-quantity">
-                                                <input
-                                                    className="edit-input"
-                                                    type="number"
-                                                    value={editQuantity}
-                                                    onChange={e => setEditQuantity(e.target.value)}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter') saveEdit(p.id);
-                                                        if (e.key === 'Escape') cancelEdit();
-                                                    }}
-                                                />
-                                            </td>
-                                            <td className="col-price">
-                                                <input
-                                                    className="edit-input"
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={editTotalPrice}
-                                                    onChange={e => setEditTotalPrice(e.target.value)}
-                                                    onKeyDown={e => {
-                                                        if (e.key === 'Enter') saveEdit(p.id);
-                                                        if (e.key === 'Escape') cancelEdit();
-                                                    }}
-                                                />
-                                            </td>
-                                            <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
-                                            <td className="col-actions">
-                                                <button onClick={() => saveEdit(p.id)} className="table-button">Save</button>
-                                                <button onClick={cancelEdit} className="table-button">Cancel</button>
-                                            </td>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <td style={{ textAlign: 'center' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedPurchaseIds.has(p.id)}
-                                                    onChange={() => toggleSelectPurchase(p.id)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                            </td>
-                                            <td>{formatDate(p.timestamp)}</td>
-                                            <td>{p.forename} {p.surname}</td>
-                                            <td>{p.itemName}</td>
-                                            <td className="col-quantity">{p.quantity}</td>
-                                            <td className="col-price">£{p.totalPrice.toFixed(2)}</td>
-                                            <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
-                                            <td className="col-actions">
-                                                <button onClick={() => startEdit(p)} className="table-button">Edit</button>
-                                                <button onClick={() => handleDeleteRequest(p)} className="delete-btn table-button">Delete</button>
-                                            </td>
-                                        </>
-                                    )}
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-
-            {selectedPurchaseIds.size > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem', background: '#fff3cd', border: '2px solid #ff9800', borderRadius: '8px', marginTop: '0.75rem' }}>
-                    <span style={{ fontWeight: '600', color: '#333' }}>{selectedPurchaseIds.size} selected</span>
-                    <button
-                        onClick={() => setBulkDeleteConfirmOpen(true)}
-                        className="delete-btn table-button"
-                    >
-                        Delete ({selectedPurchaseIds.size})
-                    </button>
-                    <button
-                        onClick={() => setSelectedPurchaseIds(new Set())}
-                        className="table-button"
-                        style={{ marginLeft: 'auto' }}
-                    >
-                        Clear Selection
-                    </button>
+            <div className="table-container">
+                <div className="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style={{ width: '40px', textAlign: 'center' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={filtered.length > 0 && selectedPurchaseIds.size === filtered.length}
+                                        onChange={toggleSelectAll}
+                                        style={{ cursor: 'pointer' }}
+                                    />
+                                </th>
+                                <th onClick={() => handleSort('timestamp')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Date & Time {sortConfig.key === 'timestamp' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('surname')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Staff Name {sortConfig.key === 'surname' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('itemName')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Item {sortConfig.key === 'itemName' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-quantity" onClick={() => handleSort('quantity')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Qty {sortConfig.key === 'quantity' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-price" onClick={() => handleSort('totalPrice')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Total {sortConfig.key === 'totalPrice' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th onClick={() => handleSort('term')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    Term {sortConfig.key === 'term' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                </th>
+                                <th className="col-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.length === 0 ? (
+                                <tr><td colSpan={8} className="no-results">No purchases found</td></tr>
+                            ) : (
+                                filtered.map(p => (
+                                    <tr key={p.id}>
+                                        {editingId === p.id ? (
+                                            <>
+                                                <td style={{ textAlign: 'center' }}></td>
+                                                <td>{formatDate(p.timestamp)}</td>
+                                                <td>{editStaffName}</td>
+                                                <td style={{ position: 'relative' }}>
+                                                    <input
+                                                        className="edit-input"
+                                                        value={editItemName}
+                                                        onChange={e => handleItemInputChange(e.target.value)}
+                                                        onFocus={() => setShowItemDropdown(true)}
+                                                        onBlur={() => setTimeout(() => setShowItemDropdown(false), 200)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') saveEdit(p.id);
+                                                            if (e.key === 'Escape') cancelEdit();
+                                                        }}
+                                                        placeholder="Search items..."
+                                                        autoComplete="off"
+                                                    />
+                                                    {showItemDropdown && getFilteredItems().length > 0 && (
+                                                        <div className="item-dropdown">
+                                                            {getFilteredItems().slice(0, 8).map(item => (
+                                                                <div
+                                                                    key={item.id}
+                                                                    className="item-dropdown-option"
+                                                                    onMouseDown={() => handleSelectItem(item.name)}
+                                                                >
+                                                                    <span className="item-name">{item.name}</span>
+                                                                    <span className="item-price">£{item.price.toFixed(2)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                                <td className="col-quantity">
+                                                    <input
+                                                        className="edit-input"
+                                                        type="number"
+                                                        value={editQuantity}
+                                                        onChange={e => setEditQuantity(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') saveEdit(p.id);
+                                                            if (e.key === 'Escape') cancelEdit();
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td className="col-price">
+                                                    <input
+                                                        className="edit-input"
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={editTotalPrice}
+                                                        onChange={e => setEditTotalPrice(e.target.value)}
+                                                        onKeyDown={e => {
+                                                            if (e.key === 'Enter') saveEdit(p.id);
+                                                            if (e.key === 'Escape') cancelEdit();
+                                                        }}
+                                                    />
+                                                </td>
+                                                <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
+                                                <td className="col-actions">
+                                                    <button onClick={() => saveEdit(p.id)} className="table-button">Save</button>
+                                                    <button onClick={cancelEdit} className="table-button">Cancel</button>
+                                                </td>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <td style={{ textAlign: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedPurchaseIds.has(p.id)}
+                                                        onChange={() => toggleSelectPurchase(p.id)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                </td>
+                                                <td>{formatDate(p.timestamp)}</td>
+                                                <td>{p.forename} {p.surname}</td>
+                                                <td>{p.itemName}</td>
+                                                <td className="col-quantity">{p.quantity}</td>
+                                                <td className="col-price">£{p.totalPrice.toFixed(2)}</td>
+                                                <td>{p.term && p.academic_year ? `${p.term} ${p.academic_year}` : 'N/A'}</td>
+                                                <td className="col-actions">
+                                                    <button onClick={() => startEdit(p)} className="table-button">Edit</button>
+                                                    <button onClick={() => handleDeleteRequest(p)} className="delete-btn table-button">Delete</button>
+                                                </td>
+                                            </>
+                                        )}
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+                {selectedPurchaseIds.size > 0 && (
+                    <div className="bulk-actions">
+                        <span style={{ fontWeight: 600 }}>{selectedPurchaseIds.size} selected</span>
+                        <button
+                            onClick={() => setBulkDeleteConfirmOpen(true)}
+                            className="delete-btn table-button"
+                        >
+                            Delete ({selectedPurchaseIds.size})
+                        </button>
+                        <button
+                            onClick={() => setSelectedPurchaseIds(new Set())}
+                            className="table-button"
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            Clear Selection
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {message && <div className="message">{message}</div>}
 

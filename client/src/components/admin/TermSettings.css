@@ -7,8 +7,8 @@
 
 .term-settings .section-description {
     color: var(--text-secondary);
-    margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    margin-bottom: 0rem;
 }
 
 .term-settings .add-term-section {
@@ -48,6 +48,8 @@
     padding: 0.6rem;
     border-radius: 6px;
     border: 2px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-primary);
     font-size: 1rem;
     transition: border-color 0.2s ease;
 }
@@ -70,7 +72,15 @@
 .term-settings {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    min-height: 0;
+}
+
+/* Ensure the list section can shrink and allow inner scroll */
+.term-settings .terms-list-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 /* Use common table structure - no custom overrides */
@@ -87,37 +97,42 @@
 }
 
 .term-settings tr.active-row td {
-    background: var(--bg-tertiary);
+    background: var(--active-row-bg);
 }
 
-.term-settings .terms-list td {
+/* Preserve highlight on hover so it doesn't blend in */
+.term-settings tr.active-row:hover td {
+    background: var(--active-row-bg);
+}
+
+.term-settings .table-container td {
     padding: 0.6rem 0.5rem;
     vertical-align: middle;
 }
 
-.term-settings .terms-list td.col-actions {
+.term-settings .table-container td.col-actions {
     text-align: right;
     width: 320px;
     white-space: nowrap;
 }
 
-.term-settings .terms-list td.col-actions .table-button {
+.term-settings .table-container td.col-actions .table-button {
     display: inline-block;
     vertical-align: middle;
     white-space: nowrap;
 }
 
-.term-settings .terms-list td.col-purchases {
+.term-settings .table-container td.col-purchases {
     text-align: center;
     color: var(--text-secondary);
 }
 
-.term-settings .terms-list .table-button {
+.term-settings .table-container .table-button {
     margin-left: 8px;
 }
 
 /* Emphasize Set Active action */
-.term-settings .terms-list .table-button.set-active {
+.term-settings .table-container .table-button.set-active {
     background: #667eea;
     color: #fff;
 }

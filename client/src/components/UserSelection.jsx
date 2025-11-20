@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search } from 'lucide-react';
+import { Search, Users } from 'lucide-react';
 import './UserSelection.css';
 
 export default function UserSelection({ onSelectStaff }) {
@@ -45,7 +45,10 @@ export default function UserSelection({ onSelectStaff }) {
     return (
         <div className="user-selection">
             <div className="selection-title">
-                <h2>Select Your Name</h2>
+                <h2>
+                    <Users size={28} />
+                    Select Your Name
+                </h2>
             </div>
 
             <div className="search-container">

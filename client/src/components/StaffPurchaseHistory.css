@@ -1,11 +1,43 @@
 .purchase-history {
-    padding: 2rem;
-    max-width: 900px;
-    margin: 0 auto;
+    padding: 0;
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.purchase-history::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
 }
 
 .history-header {
     margin-bottom: 2rem;
+    padding: 0 2rem;
+    padding-top: 2rem;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    z-index: 10;
+    padding-bottom: 1rem;
+}
+
+.purchase-content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+}
+
+.purchase-content-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
 }
 
 .history-header h2 {
@@ -42,9 +74,10 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 12px;
     padding: 1.5rem;
-    margin-bottom: 2rem;
+    margin: 0 2rem 2rem 2rem;
     color: white;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    flex-shrink: 0;
 }
 
 .summary-header {
@@ -93,7 +126,8 @@
 }
 
 .purchases-section {
-    margin-bottom: 2rem;
+    margin: 0 2rem 2rem 2rem;
+    flex-shrink: 0;
 }
 
 .purchases-section h3 {
@@ -167,7 +201,7 @@
 
 .no-purchases {
     text-align: center;
-    padding: 3rem 2rem;
+    padding: 3rem 4rem;
     color: var(--text-tertiary);
 }
 
@@ -182,9 +216,10 @@
 }
 
 .historical-section {
-    margin-top: 2rem;
+    margin: 2rem 2rem 2rem 2rem;
     padding-top: 2rem;
     border-top: 2px solid var(--border-light);
+    flex-shrink: 0;
 }
 
 .historical-section h3 {
