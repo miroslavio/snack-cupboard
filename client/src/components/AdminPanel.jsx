@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import axios from 'axios';
-import { Users, Cookie, Download, FileText, Calendar, AlertTriangle, Menu, X } from 'lucide-react';
+import { Users, Cookie, Download, FileText, Calendar, AlertTriangle, Menu, X, BarChart3 } from 'lucide-react';
 import StaffManagement from './admin/StaffManagement';
 import ItemsManagement from './admin/ItemsManagement';
 import PurchasesManagement from './admin/PurchasesManagement';
 import PurchasesExport from './admin/PurchasesExport';
 import TermSettings from './admin/TermSettings';
+import Analytics from './admin/Analytics';
 import DangerZone from './admin/DangerZone';
 import './AdminPanel.css';
 
@@ -23,6 +24,8 @@ export default function AdminPanel({ onTermChange }) {
                 return { icon: <Cookie size={24} />, text: 'Manage Items', color: null };
             case 'purchases':
                 return { icon: <FileText size={24} />, text: 'Manage Purchases', color: null };
+            case 'analytics':
+                return { icon: <BarChart3 size={24} />, text: 'Analytics Dashboard', color: null };
             case 'export':
                 return { icon: <Download size={24} />, text: 'Export Purchases', color: null };
             case 'danger':
@@ -79,6 +82,13 @@ export default function AdminPanel({ onTermChange }) {
                         Manage Purchases
                     </button>
                     <button
+                        className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                        onClick={() => handleTabClick('analytics')}
+                    >
+                        <BarChart3 size={18} />
+                        Analytics
+                    </button>
+                    <button
                         className={`tab-btn ${activeTab === 'export' ? 'active' : ''}`}
                         onClick={() => handleTabClick('export')}
                     >
@@ -106,6 +116,7 @@ export default function AdminPanel({ onTermChange }) {
                 {activeTab === 'staff' && <StaffManagement />}
                 {activeTab === 'items' && <ItemsManagement />}
                 {activeTab === 'purchases' && <PurchasesManagement />}
+                {activeTab === 'analytics' && <Analytics />}
                 {activeTab === 'export' && <PurchasesExport />}
                 {activeTab === 'danger' && <DangerZone />}
             </div>

@@ -334,4 +334,231 @@ router.get('/staff/:initials', async (req, res) => {
     }
 });
 
+// Analytics: Popular Items Report
+router.get('/analytics/popular-items', async (req, res) => {
+    try {
+        const { term, academic_year, limit = '20' } = req.query;
+
+        let query = `
+            SELECT 
+                COALESCE(p.item_name, i.name) as itemName,
+                i.category,
+                COUNT(p.id) as purchaseCount,
+                SUM(p.quantity) as totalQuantity,
+                ROUND(SUM(p.price * p.quantity), 2) as totalRevenue,
+                ROUND(AVG(p.price), 2) as avgPrice
+            FROM purchases p
+            LEFT JOIN items i ON p.itemId = i.id
+        `;
+
+        const params = [];
+        const conditions = [];
+
+        if (term) {
+            conditions.push('p.term = ?');
+            params.push(term);
+        }
+
+        if (academic_year) {
+            conditions.push('p.academic_year = ?');
+            params.push(academic_year);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += `
+            GROUP BY COALESCE(p.item_name, i.name), i.category
+            ORDER BY totalRevenue DESC
+            LIMIT ?
+        `;
+
+        params.push(parseInt(limit));
+
+        const items = await allAsync(query, params);
+        res.json(items);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Analytics: Category Breakdown
+router.get('/analytics/category-breakdown', async (req, res) => {
+    try {
+        const { term, academic_year } = req.query;
+
+        let query = `
+            SELECT 
+                COALESCE(i.category, 'Unknown') as category,
+                COUNT(p.id) as purchaseCount,
+                SUM(p.quantity) as totalQuantity,
+                ROUND(SUM(p.price * p.quantity), 2) as totalRevenue
+            FROM purchases p
+            LEFT JOIN items i ON p.itemId = i.id
+        `;
+
+        const params = [];
+        const conditions = [];
+
+        if (term) {
+            conditions.push('p.term = ?');
+            params.push(term);
+        }
+
+        if (academic_year) {
+            conditions.push('p.academic_year = ?');
+            params.push(academic_year);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += `
+            GROUP BY COALESCE(i.category, 'Unknown')
+            ORDER BY totalRevenue DESC
+        `;
+
+        const categories = await allAsync(query, params);
+
+        // Calculate percentages
+        const total = categories.reduce((sum, cat) => sum + cat.totalRevenue, 0);
+        const categoriesWithPercent = categories.map(cat => ({
+            ...cat,
+            percentage: total > 0 ? Math.round((cat.totalRevenue / total) * 100) : 0
+        }));
+
+        res.json(categoriesWithPercent);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Analytics: Staff Spending Trends
+router.get('/analytics/staff-spending', async (req, res) => {
+    try {
+        const { term, academic_year, limit = '20' } = req.query;
+
+        let query = `
+            SELECT 
+                s.initials,
+                s.forename,
+                s.surname,
+                COUNT(p.id) as purchaseCount,
+                SUM(p.quantity) as totalItems,
+                ROUND(SUM(p.price * p.quantity), 2) as totalSpent,
+                ROUND(AVG(p.price * p.quantity), 2) as avgPurchaseValue,
+                MIN(DATE(p.timestamp)) as firstPurchase,
+                MAX(DATE(p.timestamp)) as lastPurchase
+            FROM staff s
+            INNER JOIN purchases p ON s.initials = p.staffInitials
+        `;
+
+        const params = [];
+        const conditions = [];
+
+        if (term) {
+            conditions.push('p.term = ?');
+            params.push(term);
+        }
+
+        if (academic_year) {
+            conditions.push('p.academic_year = ?');
+            params.push(academic_year);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += `
+            GROUP BY s.initials, s.forename, s.surname
+            ORDER BY totalSpent DESC
+            LIMIT ?
+        `;
+
+        params.push(parseInt(limit));
+
+        const staffSpending = await allAsync(query, params);
+
+        // Calculate summary stats
+        const totalSpent = staffSpending.reduce((sum, s) => sum + s.totalSpent, 0);
+        const avgSpent = staffSpending.length > 0 ? totalSpent / staffSpending.length : 0;
+
+        res.json({
+            staffSpending,
+            summary: {
+                totalStaffWithPurchases: staffSpending.length,
+                totalSpent: Math.round(totalSpent * 100) / 100,
+                avgSpentPerStaff: Math.round(avgSpent * 100) / 100
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Analytics: Time-Based Trends
+router.get('/analytics/time-trends', async (req, res) => {
+    try {
+        const { term, academic_year, groupBy = 'day' } = req.query;
+
+        let dateFormat;
+        switch (groupBy) {
+            case 'week':
+                dateFormat = '%Y-W%W';
+                break;
+            case 'month':
+                dateFormat = '%Y-%m';
+                break;
+            default: // day
+                dateFormat = '%Y-%m-%d';
+        }
+
+        let query = `
+            SELECT 
+                strftime('${dateFormat}', p.timestamp) as period,
+                DATE(p.timestamp) as date,
+                COUNT(p.id) as purchaseCount,
+                SUM(p.quantity) as totalItems,
+                ROUND(SUM(p.price * p.quantity), 2) as totalRevenue,
+                COUNT(DISTINCT p.staffInitials) as uniqueStaff
+            FROM purchases p
+        `;
+
+        const params = [];
+        const conditions = [];
+
+        if (term) {
+            conditions.push('p.term = ?');
+            params.push(term);
+        }
+
+        if (academic_year) {
+            conditions.push('p.academic_year = ?');
+            params.push(academic_year);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += `
+            GROUP BY period
+            ORDER BY period ASC
+        `;
+
+        const trends = await allAsync(query, params);
+
+        res.json(trends);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export default router;
