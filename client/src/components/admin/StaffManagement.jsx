@@ -56,14 +56,12 @@ export default function StaffManagement() {
 
     const fetchStaff = async (q = '') => {
         try {
-            console.log('Fetching staff with includeArchived:', showArchived);
             const res = await axios.get('/api/staff', {
                 params: {
                     search: q,
                     includeArchived: showArchived
                 }
             });
-            console.log('Fetched staff count:', res.data.length);
             setStaffList(res.data);
         } catch (err) {
             console.error(err);

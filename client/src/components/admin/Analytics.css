@@ -41,10 +41,9 @@
 /* Tabs */
 .analytics-tabs {
     display: flex;
-    gap: 0.5rem;
+    row-gap: 0.5rem;
     flex-wrap: wrap;
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5rem;
 }
 
 .analytics-tab {
@@ -80,12 +79,12 @@
     min-height: 0;
 }
 
-.analytics-section {
+/* .analytics-section {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1.5rem;
-}
+} */
 
 .section-header {
     display: flex;
@@ -169,7 +168,7 @@
 
 .stat-label {
     font-size: 0.75rem;
-    color: var(--text-tertiary);
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

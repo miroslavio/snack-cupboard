@@ -112,7 +112,7 @@
     background: rgba(255, 255, 255, 0.25);
 }
 
-.stat-label {
+.purchase-history .stat-label {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
@@ -122,7 +122,7 @@
     font-weight: 600;
 }
 
-.stat-value {
+.purchase-history .stat-value {
     font-size: 2rem;
     font-weight: 700;
     color: white;
@@ -303,7 +303,7 @@
         align-items: center;
     }
 
-    .stat-value {
+    .purchase-history.stat-value {
         font-size: 1.5rem;
     }
 
